@@ -1,4 +1,3 @@
-import random
 from base import BaseAgent, Action
 from queue import PriorityQueue
 
@@ -93,9 +92,9 @@ class Agent(BaseAgent):
 
         while not frontier.empty():
             current = frontier.get()
-            print(str(current[1][0]) + str(current[1][1]))
+            # print(str(current[1][0]) + str(current[1][1]))
             if current[1][0] == goal[0] and current[1][1] == goal[1]:
-                print("Goal found")
+                # print("Goal found")
                 break
 
             for nnext in self.neighbors(current[1]):
@@ -104,8 +103,11 @@ class Agent(BaseAgent):
                     cost_so_far[nnext] = new_cost
                     priority = new_cost + manhattan(nnext, goal)
                     # print("ummm re" + str(self.grid[nnext[0]][nnext[1]]))
-                    if "E" in self.grid[nnext[0]][nnext[1]] or "2" in self.grid[nnext[0]][nnext[1]] \
-                            or "3" in self.grid[nnext[0]][nnext[1]] or "4" in self.grid[nnext[0]][nnext[1]]:
+                    if "E" in self.grid[nnext[0]][nnext[1]] or \
+                            "1" in self.grid[nnext[0]][nnext[1]] or \
+                            "2" in self.grid[nnext[0]][nnext[1]] or \
+                            "3" in self.grid[nnext[0]][nnext[1]] or "4" in self.grid[nnext[0]][nnext[1]] \
+                            or "T" in self.grid[nnext[0]][nnext[1]]:
                         frontier.put((priority, nnext))
                         # print("nnext: " + str(nnext[0]) + str(nnext[1]) + " priority: " + str(priority))
                     came_from[nnext] = current[1]
@@ -150,15 +152,41 @@ class Agent(BaseAgent):
                     tup1 = (x, j)
                     return tup1
 
+    def find_nearest_teleport(self, start):
+        tup1 = (0, 0)
+        cost = 500
+        for x in range(self.grid_height):
+            for j in range(self.grid_width):
+                if "T" in self.grid[x][j]:
+                    temptup = (x, j)
+                    # print(self.grid[x][j])
+                    # print("x: " + str(x) + " j: " + str(j))
+                    cost_so_far, came_from = self.cost(start, temptup)
+                    # print("i: " + str(cost_so_far) + "j: " + str(cost_so_far))
+                    # print(cost_so_far[temptup])
+                    if temptup in cost_so_far:
+                        if cost_so_far[temptup] < cost:
+                            tup1 = temptup
+                            cost = cost_so_far[temptup]
+        # print("i: " + str(tup1[0]) + " j: " + str(tup1[1]))
+        if "T" in self.grid[tup1[0]][tup1[1]]:
+            # print("i: " + str(tup1[0]) + " j: " + str(tup1[1]))
+            return tup1
+        else:
+            pass
+
     def eat_the_goal(self, start, goal, came_from):
         temp_goal = goal
         list_of_action = []
         list_of_action_reversed = []
         # print("cccc: " + str(came_from[temp_goal]))
-        while temp_goal not in came_from:
-            available_goals.remove(temp_goal)
-            unavailable_goals.append(temp_goal)
-            temp_goal = available_goals[0]
+        #while temp_goal not in came_from:
+            #available_goals.remove(temp_goal)
+            #unavailable_goals.append(temp_goal)
+            # if not bool(available_goals):
+                # print("emmmmmmmmmmmmmmmmpty here")
+                #available_goals.append(self.find_nearest_teleport(start))
+            # temp_goal = available_goals[0]
         while temp_goal != start:
             goal_nei = came_from[temp_goal]
             print("hey im in the loop temp goal is: " + str(temp_goal))
@@ -204,6 +232,7 @@ class Agent(BaseAgent):
         x = goal[0]
         y = goal[1]
         distance = manhattan(current, goal)
+        print(" Agent score " + str(self.agent_scores[0]))
         if self.grid[x][y] == "1":
             return 10 / distance ** 2
         elif self.grid[x][y] == "2" and self.agent_scores[0] > 15:
@@ -211,6 +240,7 @@ class Agent(BaseAgent):
         elif self.grid[x][y] == "3" and self.agent_scores[0] > 50:
             return 35 / distance ** 2
         elif self.grid[x][y] == "4" and self.agent_scores[0] > 140:
+            print("4 degree diamond available")
             return 75 / distance ** 2
         else:
             return 0
@@ -226,8 +256,17 @@ class Agent(BaseAgent):
         print("turn: " + str(i))
         start = self.find_state("A")
         available_goals, unavailable_goals = self.goals_list(start)
+        if not bool(available_goals):
+            return Action.NOOP
         goal = available_goals[0]
         cost_so_far, came_from = self.cost(start, goal)
+        while goal not in came_from:
+            available_goals.remove(goal)
+            unavailable_goals.append(goal)
+            if not bool(available_goals):
+                # print("emmmmmmmmmmmmmmmmpty here")
+                available_goals.append(self.find_nearest_teleport(start))
+            goal = available_goals[0]
         print("av: " + str(available_goals))
         print("un: " + str(unavailable_goals))
         # print("step: " + str(i) + "score: " + str(self.agent_scores[0]))
@@ -241,17 +280,18 @@ class Agent(BaseAgent):
         # print("goal came_from: " + str(came_from[goal]))
         # print(self.agent_scores)
         i = i + 1
-        # while bool(aclis):
         if bool(aclis):
             ki = aclis[0]
             aclis.remove(ki)
             print(ki)
             return ki
         else:
-            return random.choice(
-                [Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT, Action.TELEPORT, Action.NOOP, Action.TRAP])
+            # print(len(available_goals))
+            available_goals.remove(goal)
+            return Action.TELEPORT
 
 
 if __name__ == '__main__':
     data = Agent().play()
     print("FINISH : ", data)
+
