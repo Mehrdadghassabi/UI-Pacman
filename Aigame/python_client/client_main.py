@@ -9,6 +9,14 @@ aclis = []
 available_goals = []
 # list of unavailable_goals
 unavailable_goals = []
+# number of yellow Diamond eaten
+yellow_diamond_eaten = 0
+# number of green Diamond eaten
+green_diamond_eaten = 0
+# number of red Diamond eaten
+red_diamond_eaten = 0
+# number of blue Diamond eaten
+blue_diamond_eaten = 0
 
 
 # manhattan distance of 2 node
@@ -157,24 +165,28 @@ class Agent(BaseAgent):
                 # print(self.grid[i][j])
                 if self.grid[x][j] == "1":
                     tup1 = (x, j)
-                    lavailable_goals.append(tup1)
+                    if self.agent_scores[0] >= 15 + manhattan(current, tup1) and yellow_diamond_eaten <= 15:
+                        # print("Scpo2 : " + str(15 + manhattan(current, tup1)))
+                        lavailable_goals.append(tup1)
+                    else:
+                        lunavailable_goals.append(tup1)
                 if self.grid[x][j] == "2":
                     tup1 = (x, j)
-                    if self.agent_scores[0] >= 15 + manhattan(current, tup1):
+                    if self.agent_scores[0] >= 15 + manhattan(current, tup1) and green_diamond_eaten <= 8:
                         # print("Scpo2 : " + str(15 + manhattan(current, tup1)))
                         lavailable_goals.append(tup1)
                     else:
                         lunavailable_goals.append(tup1)
                 if self.grid[x][j] == "3":
                     tup1 = (x, j)
-                    if self.agent_scores[0] >= 50 + manhattan(current, tup1):
+                    if self.agent_scores[0] >= 50 + manhattan(current, tup1) and red_diamond_eaten <= 5:
                         # print("Scpo3 : " + str(50 + manhattan(current, tup1)))
                         lavailable_goals.append(tup1)
                     else:
                         lunavailable_goals.append(tup1)
                 if self.grid[x][j] == "4":
                     tup1 = (x, j)
-                    if self.agent_scores[0] >= 140 + manhattan(current, tup1):
+                    if self.agent_scores[0] >= 140 + manhattan(current, tup1) and blue_diamond_eaten <= 4:
                         # print("Scpo4 : " + str(140 + manhattan(current, tup1)))
                         lavailable_goals.append(tup1)
                     else:
@@ -215,6 +227,25 @@ class Agent(BaseAgent):
         else:
             pass
 
+    def count_number_of_eaten_goals(self, goal):
+        global yellow_diamond_eaten
+        global green_diamond_eaten
+        global red_diamond_eaten
+        global blue_diamond_eaten
+
+        if self.grid[goal[0]][goal[1]] == "1":
+            # print("yellow_diamond_eaten: " + str(yellow_diamond_eaten))
+            yellow_diamond_eaten = yellow_diamond_eaten + 1
+        elif self.grid[goal[0]][goal[1]] == "2":
+            # print("green_diamond_eaten: " + str(green_diamond_eaten))
+            green_diamond_eaten = green_diamond_eaten + 1
+        elif self.grid[goal[0]][goal[1]] == "3":
+            # print("red_diamond_eaten: " + str(red_diamond_eaten))
+            red_diamond_eaten = red_diamond_eaten + 1
+        elif self.grid[goal[0]][goal[1]] == "4":
+            # print("blue_diamond_eaten: " + str(blue_diamond_eaten))
+            blue_diamond_eaten = blue_diamond_eaten + 1
+
     # Just the Goal
     # How?
     # by having came_from array
@@ -222,6 +253,7 @@ class Agent(BaseAgent):
     # follow the cost function
     # to understand what does came_from array is
     def eat_the_goal(self, start, goal, came_from):
+        self.count_number_of_eaten_goals(goal)
         temp_goal = goal
         list_of_action = []
         list_of_action_reversed = []
@@ -266,8 +298,8 @@ class Agent(BaseAgent):
             temp = available_goals[small]
             available_goals[small] = available_goals[x]
             available_goals[x] = temp
-        print("currrren" + str(current[0]) + str(current[1]))
-        print(available_goals)
+        # print("currrren" + str(current[0]) + str(current[1]))
+        # print(available_goals)
         return available_goals
 
     # by having current & goal
@@ -361,14 +393,13 @@ class Agent(BaseAgent):
         # self.print_availability(start)
 
         if not bool(aclis):
-            print("im in part one step is: " + str(i))
+            # print("im in part one step is: " + str(i))
             available_goals = self.sort_available_goals(len(available_goals), start)
             # temp
             goal = available_goals[0]
+            cost_so_far, came_from = self.cost(start, goal)
             aclis = self.eat_the_goal(start, goal, came_from)
-            print("the AVVVVVVVVgoal is:: " + str(available_goals[0]))
-            print("the goal is:: " + str(goal[0]) + str(goal[1]))
-            print("the path is=== " + str(aclis))
+            # print("the path is=== " + str(aclis))
         if bool(aclis):
             # print("im in part two step is: " + str(i))
             first_ac = aclis[0]
