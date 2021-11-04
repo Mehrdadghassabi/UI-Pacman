@@ -260,13 +260,14 @@ class Agent(BaseAgent):
             for j in range(x, size):
                 # print("hi: " + str(self.goal_score_function(available_goals[j], current)))
                 # print("bye: " + str(self.goal_score_function(available_goals[small], current)))
-                if self.goal_score_function(available_goals[j], current) < self.goal_score_function(
+                if self.goal_score_function(available_goals[j], current) > self.goal_score_function(
                         available_goals[small], current):
                     small = j
             temp = available_goals[small]
             available_goals[small] = available_goals[x]
             available_goals[x] = temp
-
+        print("currrren" + str(current[0]) + str(current[1]))
+        print(available_goals)
         return available_goals
 
     # by having current & goal
@@ -277,14 +278,17 @@ class Agent(BaseAgent):
         y = goal[1]
         distance = manhattan(current, goal)
         # print(" Agent score " + str(self.agent_scores[0]))
+
         if self.grid[x][y] == "1":
             return 10 / distance ** 2
         elif self.grid[x][y] == "2" and self.agent_scores[0] > 15:
+
             return 25 / distance ** 2
         elif self.grid[x][y] == "3" and self.agent_scores[0] > 50:
+
             return 35 / distance ** 2
         elif self.grid[x][y] == "4" and self.agent_scores[0] > 140:
-            # print("4 degree diamond available")
+
             return 75 / distance ** 2
         else:
             return 0
@@ -358,16 +362,20 @@ class Agent(BaseAgent):
 
         if not bool(aclis):
             print("im in part one step is: " + str(i))
-            aclis = self.eat_the_goal(start, goal, came_from)
             available_goals = self.sort_available_goals(len(available_goals), start)
-            # print("the path is=== " + str(aclis))
+            # temp
+            goal = available_goals[0]
+            aclis = self.eat_the_goal(start, goal, came_from)
+            print("the AVVVVVVVVgoal is:: " + str(available_goals[0]))
+            print("the goal is:: " + str(goal[0]) + str(goal[1]))
+            print("the path is=== " + str(aclis))
         if bool(aclis):
-            print("im in part two step is: " + str(i))
+            # print("im in part two step is: " + str(i))
             first_ac = aclis[0]
             aclis.remove(first_ac)
             return first_ac
         else:
-            print("im in part three step is: " + str(i))
+            # print("im in part three step is: " + str(i))
             available_goals.remove(goal)
             return Action.TELEPORT
 
