@@ -1,12 +1,18 @@
 from base import BaseAgent, Action
 from queue import PriorityQueue
 
+# step number
 i = 0
+# action list waiting to be taken
 aclis = []
+# list of available_goals
 available_goals = []
+# list of unavailable_goals
 unavailable_goals = []
 
 
+# manhattan distance of 2 node
+# regardless  of existence a path
 def manhattan(start, goal):
     # print("man: " + str(abs(start[0] - goal[0]) + abs(start[1] - goal[1])))
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
@@ -14,6 +20,11 @@ def manhattan(start, goal):
 
 class Agent(BaseAgent):
 
+    # return von Neumann neighbours of a node
+    # note that :
+    # the frontier nodes have 3 von Neumann neighbour
+    # the corner nodes have 3 von Neumann neighbour
+    # the others have 4 von Neumann neighbour
     def neighbors(self, node):
         width = self.grid_width
         height = self.grid_height
@@ -82,6 +93,29 @@ class Agent(BaseAgent):
         # print(neis)
         return neis
 
+    #  Find paths from start to goal
+    #  We’re not only trying to find the shortest distance
+    #  We also want to take into account travel time
+    #  There is 3 approach for doing this
+    #  1: Breadth First Search explores equally in all directions
+    #  This is an incredibly useful algorithm, not only for regular path finding,
+    #  but also for procedural map generation, flow field pathfinding,
+    #  distance maps, and other types of map analysis.
+    #  2: Dijkstra’s Algorithm (also called Uniform Cost Search)
+    #  lets us prioritize which paths to explore.
+    #  Instead of exploring all possible paths equally,
+    #  it favors lower cost paths.
+    #  We can assign lower costs to encourage moving on roads,
+    #  higher costs to avoid forests, higher costs to discourage going near enemies, and more.
+    #  When movement costs vary, we use this instead of Breadth First Search.
+    # A* is a modification of Dijkstra’s Algorithm that is optimized for a single destination.
+    # Dijkstra’s Algorithm can find paths to all locations;
+    # A* finds paths to one location, or the closest of several locations.
+    # It prioritizes paths that seem to be leading closer to a goal.
+    # 3: A* Dijkstra’s Algorithm works well to find the shortest path,
+    # but it wastes time exploring in directions that aren’t promising.
+    # Greedy Best First Search explores in promising directions but it may not find the shortest path.
+    # The A* algorithm uses both the actual distance from the start and the estimated distance to the goal.
     def cost(self, start, goal):
         frontier = PriorityQueue()
         frontier.put((0, start))
@@ -113,6 +147,8 @@ class Agent(BaseAgent):
                     came_from[nnext] = current[1]
         return cost_so_far, came_from
 
+    # finding available_goals due to score by goals_list (regardless of the path)
+    # considering manhattan distance from the current state
     def goals_list(self, current):
         lavailable_goals = []
         lunavailable_goals = []
@@ -145,6 +181,8 @@ class Agent(BaseAgent):
                         lunavailable_goals.append(tup1)
         return lavailable_goals, lunavailable_goals
 
+    # find the Agent st=A location
+    # by searching all of the grid
     def find_state(self, st):
         for x in range(self.grid_height):
             for j in range(self.grid_width):
@@ -152,6 +190,8 @@ class Agent(BaseAgent):
                     tup1 = (x, j)
                     return tup1
 
+    # find the nearest_teleport
+    # cost 500 means no teleport found
     def find_nearest_teleport(self, start):
         tup1 = (0, 0)
         cost = 500
@@ -175,27 +215,25 @@ class Agent(BaseAgent):
         else:
             pass
 
+    # Just the Goal
+    # How?
+    # by having came_from array
+    # you just need to return list of actions
+    # follow the cost function
+    # to understand what does came_from array is
     def eat_the_goal(self, start, goal, came_from):
         temp_goal = goal
         list_of_action = []
         list_of_action_reversed = []
-        # print("cccc: " + str(came_from[temp_goal]))
-        #while temp_goal not in came_from:
-            #available_goals.remove(temp_goal)
-            #unavailable_goals.append(temp_goal)
-            # if not bool(available_goals):
-                # print("emmmmmmmmmmmmmmmmpty here")
-                #available_goals.append(self.find_nearest_teleport(start))
-            # temp_goal = available_goals[0]
         while temp_goal != start:
             goal_nei = came_from[temp_goal]
-            print("hey im in the loop temp goal is: " + str(temp_goal))
-            print("hey im in the loop  goalnei is: " + str(goal_nei))
+            # print("hey im in the loop temp goal is: " + str(temp_goal))
+            # print("hey im in the loop  goalnei is: " + str(goal_nei))
             x = temp_goal[0] - goal_nei[0]
             y = temp_goal[1] - goal_nei[1]
-            print("x = " + str(x))
-            print("y = " + str(y))
-            print("---------------------------------------------------")
+            # print("x = " + str(x))
+            # print("y = " + str(y))
+            # print("---------------------------------------------------")
             if x == 1 and y == 0:
                 list_of_action.append(Action.DOWN)
             if x == -1 and y == 0:
@@ -212,8 +250,11 @@ class Agent(BaseAgent):
             list_of_action_reversed.append(item)
         return list_of_action_reversed
 
+    # sorting the available_goals
+    # having more goal_score_function means
+    # the goal has a higher priority
     def sort_available_goals(self, size, current):
-        print(size)
+        # print(size)
         for x in range(size):
             small = x
             for j in range(x, size):
@@ -228,11 +269,14 @@ class Agent(BaseAgent):
 
         return available_goals
 
+    # by having current & goal
+    # this is score function priority
+    # having more score means having more priority
     def goal_score_function(self, goal, current):
         x = goal[0]
         y = goal[1]
         distance = manhattan(current, goal)
-        print(" Agent score " + str(self.agent_scores[0]))
+        # print(" Agent score " + str(self.agent_scores[0]))
         if self.grid[x][y] == "1":
             return 10 / distance ** 2
         elif self.grid[x][y] == "2" and self.agent_scores[0] > 15:
@@ -240,53 +284,90 @@ class Agent(BaseAgent):
         elif self.grid[x][y] == "3" and self.agent_scores[0] > 50:
             return 35 / distance ** 2
         elif self.grid[x][y] == "4" and self.agent_scores[0] > 140:
-            print("4 degree diamond available")
+            # print("4 degree diamond available")
             return 75 / distance ** 2
         else:
             return 0
 
-    def do_turn(self) -> Action:
+    # just for debugging
+    # print the ----- line
+    # print the score at step i
+    # print turn number
+    def print_score_turn(self, score):
         global i
-        global aclis
-        global available_goals
-        global unavailable_goals
         print(
-            "-----------------------------------------------------------------------------------------------------------------------------")
-        print("my score is:: " + str(self.agent_scores[0]))
+            "---------------------------------------------------------------"
+            "--------------------------------------------------------------")
+        print("my score is:: " + str(score))
         print("turn: " + str(i))
-        start = self.find_state("A")
-        available_goals, unavailable_goals = self.goals_list(start)
-        if not bool(available_goals):
-            return Action.NOOP
-        goal = available_goals[0]
-        cost_so_far, came_from = self.cost(start, goal)
-        while goal not in came_from:
-            available_goals.remove(goal)
-            unavailable_goals.append(goal)
-            if not bool(available_goals):
-                # print("emmmmmmmmmmmmmmmmpty here")
-                available_goals.append(self.find_nearest_teleport(start))
-            goal = available_goals[0]
+
+    # just for debugging
+    # print the available_goals & unavailable_goals
+    # print the current position
+    def print_availability(self, start):
         print("av: " + str(available_goals))
         print("un: " + str(unavailable_goals))
         # print("step: " + str(i) + "score: " + str(self.agent_scores[0]))
         print("my current position: " + str(start))
         # print("distance to goal: " + str(cost_so_far[goal]))
+
+    # some goals are available due to their points but there is no direct path to them
+    # just make them unavailable!!
+    # and if there is no available goal target the nearest teleport
+    def make_wall_goal_unavailable(self, start, goal, came_from):
+        while goal not in came_from:
+            available_goals.remove(goal)
+            unavailable_goals.append(goal)
+            if not bool(available_goals):
+                # print("empty here")
+                available_goals.append(self.find_nearest_teleport(start))
+            goal = available_goals[0]
+        return goal
+
+    # Ok we are at step number i
+    # find the current state of agent A
+    # then we find available_goals due to score by goals_list (regardless of the path)
+    # if all available_goals are eaten return noop
+    # else
+    # take the first available_goal as the target goal
+    # search for a path between start and target goal
+    # the goals that there is no path to them should be unavailable by make_wall_goal_unavailable
+    # There you go!! its the final decision three decision are available
+    # 1: finding the best path that should be traversed
+    # 2: traversing that path
+    # 3: find a teleport if there is no available goal
+    def do_turn(self) -> Action:
+        global i
+        global aclis
+        global available_goals
+        global unavailable_goals
+        i = i + 1
+        # self.print_score_turn(self.agent_scores[0])
+
+        start = self.find_state("A")
+        available_goals, unavailable_goals = self.goals_list(start)
+
+        if not bool(available_goals):
+            return Action.NOOP
+
+        goal = available_goals[0]
+        cost_so_far, came_from = self.cost(start, goal)
+
+        goal = self.make_wall_goal_unavailable(start, goal, came_from)
+        # self.print_availability(start)
+
         if not bool(aclis):
+            print("im in part one step is: " + str(i))
             aclis = self.eat_the_goal(start, goal, came_from)
             available_goals = self.sort_available_goals(len(available_goals), start)
-            # aclis = self.sort_available_goals(available_goals, len(available_goals), start)
-            print("the path is=== " + str(aclis))
-        # print("goal came_from: " + str(came_from[goal]))
-        # print(self.agent_scores)
-        i = i + 1
+            # print("the path is=== " + str(aclis))
         if bool(aclis):
-            ki = aclis[0]
-            aclis.remove(ki)
-            print(ki)
-            return ki
+            print("im in part two step is: " + str(i))
+            first_ac = aclis[0]
+            aclis.remove(first_ac)
+            return first_ac
         else:
-            # print(len(available_goals))
+            print("im in part three step is: " + str(i))
             available_goals.remove(goal)
             return Action.TELEPORT
 
@@ -294,4 +375,3 @@ class Agent(BaseAgent):
 if __name__ == '__main__':
     data = Agent().play()
     print("FINISH : ", data)
-
