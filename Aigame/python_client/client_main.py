@@ -203,7 +203,7 @@ class Agent(BaseAgent):
                     return tup1
 
     # find the nearest_teleport
-    # cost 500 means no teleport found
+    # cost 500 and (-1,-1) means no teleport found
     def find_nearest_teleport(self, start):
         tup1 = (0, 0)
         cost = 500
@@ -225,8 +225,12 @@ class Agent(BaseAgent):
             # print("i: " + str(tup1[0]) + " j: " + str(tup1[1]))
             return tup1
         else:
-            pass
+            # print("nothing found")
+            tup2 = (-1, -1)
+            return tup2
 
+    # just a method to count the eaten diamond
+    # due to games rule number of eating diamond are limited
     def count_number_of_eaten_goals(self, goal):
         global yellow_diamond_eaten
         global green_diamond_eaten
@@ -325,6 +329,7 @@ class Agent(BaseAgent):
         else:
             return 0
 
+
     # just for debugging
     # print the ----- line
     # print the score at step i
@@ -350,13 +355,19 @@ class Agent(BaseAgent):
     # some goals are available due to their points but there is no direct path to them
     # just make them unavailable!!
     # and if there is no available goal target the nearest teleport
+    # if no teleport found in this case it means everything done
+    # just break the while loop
     def make_wall_goal_unavailable(self, start, goal, came_from):
         while goal not in came_from:
             available_goals.remove(goal)
             unavailable_goals.append(goal)
             if not bool(available_goals):
                 # print("empty here")
-                available_goals.append(self.find_nearest_teleport(start))
+                tup1 = self.find_nearest_teleport(start)
+                if not tup1[0] == -1 and not tup1[1] == -1:
+                    available_goals.append(self.find_nearest_teleport(start))
+                else:
+                    break
             goal = available_goals[0]
         return goal
 
@@ -372,7 +383,7 @@ class Agent(BaseAgent):
     # 1: finding the best path that should be traversed
     # 2: traversing that path
     # 3: find a teleport if there is no available goal
-    def do_turn(self) -> Action:
+    def find_appropriate_turn(self):
         global i
         global aclis
         global available_goals
@@ -396,8 +407,11 @@ class Agent(BaseAgent):
             # print("im in part one step is: " + str(i))
             available_goals = self.sort_available_goals(len(available_goals), start)
             # temp
+            if not bool(available_goals):
+                return Action.NOOP
             goal = available_goals[0]
             cost_so_far, came_from = self.cost(start, goal)
+            goal = self.make_wall_goal_unavailable(start, goal, came_from)
             aclis = self.eat_the_goal(start, goal, came_from)
             # print("the path is=== " + str(aclis))
         if bool(aclis):
@@ -409,6 +423,12 @@ class Agent(BaseAgent):
             # print("im in part three step is: " + str(i))
             available_goals.remove(goal)
             return Action.TELEPORT
+
+    # Do the turn
+    # updating...
+    def do_turn(self) -> Action:
+        print()
+        return self.find_appropriate_turn()
 
 
 if __name__ == '__main__':
