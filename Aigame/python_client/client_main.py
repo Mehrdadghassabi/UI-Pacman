@@ -401,7 +401,7 @@ class Agent(BaseAgent):
         pogo = manhattan(start, goal)
         tego = manhattan(start, nearest_teleport) + tele_gc_goal + prefer
         tbts = (tego < pogo)
-        self.print_tele_better_than_straight(pogo, tego, nearest_teleport, tbts, tele_gc_goal, rounded_tele_gc)
+        # self.print_tele_better_than_straight(pogo, tego, nearest_teleport, tbts, tele_gc_goal, rounded_tele_gc)
         return tbts
 
     # just for debugging
@@ -476,7 +476,7 @@ class Agent(BaseAgent):
         global available_goals
         global unavailable_goals
         i = i + 1
-        self.print_score_turn(self.agent_scores[0])
+        # self.print_score_turn(self.agent_scores[0])
         start = self.find_state("A")
         available_goals, unavailable_goals = self.goals_list(start)
 
@@ -490,7 +490,7 @@ class Agent(BaseAgent):
         if self.tele_better_than_straight(start, goal):
             nearest_teleports = self.find_nearest_teleport(start)
             available_goals.append(nearest_teleports)
-        self.print_availability(start)
+        # self.print_availability(start)
         if not bool(aclis):
             # print("im in part one step is: " + str(i))
             available_goals = self.sort_available_goals(len(available_goals), start)
