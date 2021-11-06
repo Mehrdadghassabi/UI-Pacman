@@ -1,22 +1,34 @@
 from base import BaseAgent, Action
 from queue import PriorityQueue
 
-# step number
+# increasing :) (:
+# it was phase 1 final day and im so exhausted
+# total days spent = 9
+# total hours spent = 80
+
+
 i = 0
-# action list waiting to be taken
+# step number
 aclis = []
-# list of available_goals
+# action list waiting to be taken
 available_goals = []
-# list of unavailable_goals
+# list of available_goals
 unavailable_goals = []
-# number of yellow Diamond eaten
+# list of unavailable_goals
 yellow_diamond_eaten = 0
-# number of green Diamond eaten
+# number of yellow Diamond eaten
 green_diamond_eaten = 0
-# number of red Diamond eaten
+# number of green Diamond eaten
 red_diamond_eaten = 0
-# number of blue Diamond eaten
+# number of red Diamond eaten
 blue_diamond_eaten = 0
+# number of blue Diamond eaten
+tbts = False
+# tele better than straight
+Inf = 1000
+# Inf
+prefer = 3
+# how much do we prefer straight than tele
 
 
 # manhattan distance of 2 node
@@ -205,8 +217,9 @@ class Agent(BaseAgent):
     # find the nearest_teleport
     # cost 500 and (-1,-1) means no teleport found
     def find_nearest_teleport(self, start):
+        global Inf
         tup1 = (0, 0)
-        cost = 500
+        cost = Inf
         for x in range(self.grid_height):
             for j in range(self.grid_width):
                 if "T" in self.grid[x][j]:
@@ -261,6 +274,8 @@ class Agent(BaseAgent):
         temp_goal = goal
         list_of_action = []
         list_of_action_reversed = []
+        if self.grid[goal[0]][goal[1]] == "T":
+            list_of_action.append(Action.TELEPORT)
         while temp_goal != start:
             goal_nei = came_from[temp_goal]
             # print("hey im in the loop temp goal is: " + str(temp_goal))
@@ -309,6 +324,9 @@ class Agent(BaseAgent):
     # by having current & goal
     # this is score function priority
     # having more score means having more priority
+    # the function doesnt give us the best answer
+    # so lets use Q learning
+    # updating...
     def goal_score_function(self, goal, current):
         x = goal[0]
         y = goal[1]
@@ -326,9 +344,77 @@ class Agent(BaseAgent):
         elif self.grid[x][y] == "4" and self.agent_scores[0] > 140:
 
             return 75 / distance ** 2
+        elif self.grid[x][y] == "T" and tbts:
+            return 1000
         else:
             return 0
 
+    # finding gravity center of teleports
+    # since coming out of teleports are random
+    # we need to compute an Expected value
+    # somehow help us made the decision
+    def center_gravity_teleports(self, start):
+        global Inf
+        xsum = 0
+        ysum = 0
+        teleports_number = 0
+        nearest_teleport = self.find_nearest_teleport(start)
+        for x in range(self.grid_height):
+            for j in range(self.grid_width):
+                if self.grid[x][j] == "T" and x != nearest_teleport[0] and j != nearest_teleport[1]:
+                    xsum = xsum + x
+                    ysum = ysum + j
+                    teleports_number = teleports_number + 1
+        if teleports_number != 0:
+            xave = xsum / teleports_number
+            yave = ysum / teleports_number
+            tup1 = (xave, yave)
+        else:
+            # print("there is no tele so there is no tgc")
+            tup1 = (-Inf, -Inf)
+        # print("man gravity is : " + str(tup1))
+        return tup1, nearest_teleport
+
+    # this function would tell us is it right to target teleport
+    # in order to find better accessibility
+    # it would change when q learner added
+    # updating..
+    def tele_better_than_straight(self, start, goal):
+        global tbts
+        global Inf
+        global prefer
+        tele_gc, nearest_teleport = self.center_gravity_teleports(start)
+        # if there is no telegc return False
+        if tele_gc[0] == -Inf and tele_gc[1] == -Inf:
+            tbts = False
+            return False
+        rounded_tele_gcx = round(tele_gc[0])
+        rounded_tele_gcy = round(tele_gc[1])
+        rounded_tele_gc = (rounded_tele_gcx, rounded_tele_gcy)
+        cost_so_far, came_from = self.cost(rounded_tele_gc, goal)
+        if goal in cost_so_far:
+            tele_gc_goal = cost_so_far[goal]
+            # print(cost_so_far[goal])
+        else:
+            tele_gc_goal = Inf
+            # print("Inf")
+        pogo = manhattan(start, goal)
+        tego = manhattan(start, nearest_teleport) + tele_gc_goal + prefer
+        tbts = (tego < pogo)
+        self.print_tele_better_than_straight(pogo, tego, nearest_teleport, tbts, tele_gc_goal, rounded_tele_gc)
+        return tbts
+
+    # just for debugging
+    # print the nearest teleport
+    # print cost of straight
+    # print cost of tele
+    def print_tele_better_than_straight(self, pogo, tego, nearest_teleport, tbts, tele_gc_goal, rounded_tele_gc):
+        print("nearest tele= " + str(nearest_teleport))
+        print("pogo= " + str(pogo))
+        print("togo= " + str(tego))
+        print("tele_gc_goal: " + str(tele_gc_goal))
+        print("rounded_tele_gc" + str(rounded_tele_gc))
+        print(tbts)
 
     # just for debugging
     # print the ----- line
@@ -375,6 +461,7 @@ class Agent(BaseAgent):
     # find the current state of agent A
     # then we find available_goals due to score by goals_list (regardless of the path)
     # if all available_goals are eaten return noop
+    # if tele_better_than_straight mark the nearest teleport as the target goal
     # else
     # take the first available_goal as the target goal
     # search for a path between start and target goal
@@ -389,8 +476,7 @@ class Agent(BaseAgent):
         global available_goals
         global unavailable_goals
         i = i + 1
-        # self.print_score_turn(self.agent_scores[0])
-
+        self.print_score_turn(self.agent_scores[0])
         start = self.find_state("A")
         available_goals, unavailable_goals = self.goals_list(start)
 
@@ -401,18 +487,20 @@ class Agent(BaseAgent):
         cost_so_far, came_from = self.cost(start, goal)
 
         goal = self.make_wall_goal_unavailable(start, goal, came_from)
-        # self.print_availability(start)
-
+        if self.tele_better_than_straight(start, goal):
+            nearest_teleports = self.find_nearest_teleport(start)
+            available_goals.append(nearest_teleports)
+        self.print_availability(start)
         if not bool(aclis):
             # print("im in part one step is: " + str(i))
             available_goals = self.sort_available_goals(len(available_goals), start)
-            # temp
             if not bool(available_goals):
                 return Action.NOOP
             goal = available_goals[0]
             cost_so_far, came_from = self.cost(start, goal)
             goal = self.make_wall_goal_unavailable(start, goal, came_from)
             aclis = self.eat_the_goal(start, goal, came_from)
+
             # print("the path is=== " + str(aclis))
         if bool(aclis):
             # print("im in part two step is: " + str(i))
@@ -427,7 +515,6 @@ class Agent(BaseAgent):
     # Do the turn
     # updating...
     def do_turn(self) -> Action:
-        print()
         return self.find_appropriate_turn()
 
 
