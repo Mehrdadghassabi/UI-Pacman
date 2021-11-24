@@ -28,6 +28,8 @@ tbts = False
 Inf = 1000
 # Inf
 prefer = 3
+
+
 # how much do we prefer straight than tele
 
 
@@ -457,6 +459,154 @@ class Agent(BaseAgent):
             goal = available_goals[0]
         return goal
 
+    def agent_one_scaring_from_agent_two(self, scorone, scortwo):
+        return scorone < scortwo
+
+    def attack_or_flee(self, start, enemypos, scared_from_enemy):
+        width = self.grid_width
+        height = self.grid_height
+        qi = start[0]
+        qj = start[1]
+        qm = enemypos[0]
+        qn = enemypos[1]
+        qx = int(height / 2)
+        qy = int(width / 2)
+        if scared_from_enemy:
+            print("im scareeed")
+            if qi - qm > 0:
+                if qj - qn > 0:
+                    if qx - qi > 0:
+                        return Action.DOWN
+                    elif qy - qj > 0:
+                        return Action.RIGHT
+                    else:
+                        if qj == width - 1:
+                            return Action.LEFT
+                        else:
+                            return Action.RIGHT
+                elif qj - qn == 0:
+                    if qx - qi > 0:
+                        return Action.DOWN
+                    elif qy - qj > 0:
+                        return Action.RIGHT
+                    elif qj - qy > 0:
+                        return Action.LEFT
+                    else:
+                        if qj == width - 1:
+                            return Action.LEFT
+                        else:
+                            return Action.RIGHT
+                elif qj - qn < 0:
+                    if qx - qi > 0:
+                        return Action.DOWN
+                    elif qj - qy > 0:
+                        return Action.LEFT
+                    else:
+                        if qj == 0:
+                            return Action.RIGHT
+                        else:
+                            return Action.LEFT
+            if qi - qm == 0:
+                if qj - qn > 0:
+                    if qy - qj > 0:
+                        return Action.RIGHT
+                    elif qx - qi > 0:
+                        return Action.DOWN
+                    elif qi - qx > 0:
+                        return Action.UP
+                    else:
+                        if qi == 0:
+                            return Action.DOWN
+                        else:
+                            return Action.UP
+                if qj - qn < 0:
+                    if qj - qy > 0:
+                        return Action.LEFT
+                    elif qx - qi > 0:
+                        return Action.DOWN
+                    elif qi - qx > 0:
+                        return Action.UP
+                    else:
+                        if qi == 0:
+                            return Action.DOWN
+                        else:
+                            return Action.UP
+            if qi - qm < 0:
+                if qj - qn > 0:
+                    if qi - qx > 0:
+                        return Action.UP
+                    elif qy - qj > 0:
+                        return Action.RIGHT
+                    else:
+                        if qj == width - 1:
+                            return Action.LEFT
+                        else:
+                            return Action.RIGHT
+                elif qj - qn == 0:
+                    if qi - qx > 0:
+                        return Action.UP
+                    elif qy - qj > 0:
+                        return Action.RIGHT
+                    elif qj - qy > 0:
+                        return Action.LEFT
+                    else:
+                        if qj == width - 1:
+                            return Action.LEFT
+                        else:
+                            return Action.RIGHT
+                elif qj - qn < 0:
+                    if qi - qx > 0:
+                        return Action.UP
+                    elif qj - qy > 0:
+                        return Action.LEFT
+                    else:
+                        if qj == 0:
+                            return Action.RIGHT
+                        else:
+                            return Action.LEFT
+        else:
+            print("im brave")
+            print(manhattan(start, enemypos))
+            if qi - qm > 0:
+                if qj - qn > 0:
+                    if qx - qi > 0:
+                        return Action.UP
+                    elif qy - qj > 0:
+                        return Action.LEFT
+                    else:
+                        return Action.LEFT
+                elif qj - qn == 0:
+                    return Action.DOWN
+                elif qj - qn < 0:
+                    if qx - qi > 0:
+                        return Action.UP
+                    elif qj - qy > 0:
+                        return Action.RIGHT
+                    else:
+                        return Action.RIGHT
+            if qi - qm == 0:
+                if qj - qn > 0:
+                    return Action.LEFT
+                if qj - qn < 0:
+                    return Action.RIGHT
+            if qi - qm < 0:
+                if qj - qn > 0:
+                    if qi - qx > 0:
+                        return Action.DOWN
+                    elif qy - qj > 0:
+                        return Action.LEFT
+                    else:
+                        return Action.LEFT
+                elif qj - qn == 0:
+                    return Action.DOWN
+                elif qj - qn < 0:
+                    if qi - qx > 0:
+                        return Action.DOWN
+                    elif qj - qy > 0:
+                        return Action.RIGHT
+                    else:
+                        return Action.RIGHT
+
     # Ok we are at step number i
     # find the current state of agent A
     # then we find available_goals due to score by goals_list (regardless of the path)
@@ -478,10 +628,16 @@ class Agent(BaseAgent):
         i = i + 1
         # self.print_score_turn(self.agent_scores[0])
         start = self.find_state("A")
+        enemypos = self.find_state("B")
+        myscore = self.agent_scores[0]
+        enemyscore = self.agent_scores[1]
+        scared_from_enemy = self.agent_one_scaring_from_agent_two(myscore, enemyscore)
+
         available_goals, unavailable_goals = self.goals_list(start)
 
         if not bool(available_goals):
-            return Action.NOOP
+            return self.attack_or_flee(start, enemypos, scared_from_enemy)
+            # return Action.NOOP
 
         goal = available_goals[0]
         cost_so_far, came_from = self.cost(start, goal)
@@ -495,7 +651,8 @@ class Agent(BaseAgent):
             # print("im in part one step is: " + str(i))
             available_goals = self.sort_available_goals(len(available_goals), start)
             if not bool(available_goals):
-                return Action.NOOP
+                return self.attack_or_flee(start, enemypos, scared_from_enemy)
+                # return Action.NOOP
             goal = available_goals[0]
             cost_so_far, came_from = self.cost(start, goal)
             goal = self.make_wall_goal_unavailable(start, goal, came_from)
