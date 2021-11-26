@@ -30,6 +30,7 @@ Inf = 1000
 prefer = 3
 # how much do we prefer straight than tele
 this_level = []
+# current depth of me-enemy tree for trapping
 minus_Inf = -1000
 
 
@@ -459,6 +460,8 @@ class Agent(BaseAgent):
             goal = available_goals[0]
         return goal
 
+    # bfs search for the me-enemy tree
+    # following minimax algorithm
     def breadth_first_search_trap(self, meturn, remaindep):
         global this_level
         if remaindep == 0:
@@ -497,6 +500,9 @@ class Agent(BaseAgent):
         this_level = nex_level
         self.breadth_first_search_trap(meturn, remaindep - 1)
 
+    # following minimax algorithm
+    # this method tell us
+    # that is this propare to trap now?
     def is_thisـproper_to_trap(self, start, enemypos, scared_from_enemy):
         global this_level
         startx = start[0]
@@ -523,6 +529,7 @@ class Agent(BaseAgent):
         # print("--------------------------------------------------")
         return True, r
 
+    # agent one is you and agent two is enemy
     # return a boolean to determine that
     # is agent1 scared from agent2 ?
     # if agent2 score is more than first one then agent1 is scared
@@ -530,7 +537,13 @@ class Agent(BaseAgent):
     # if agent1 doesnt scare from agent2 it can follow agent2 and hit it
     def agent_one_scaring_from_agent_two(self, scorone, scortwo):
         return scorone < scortwo
-    
+
+    # by having your position and enemy position
+    # if youre not scared from the enemy
+    # you can chased the enemy and hit it
+    # and if youre scared from enemy
+    # you should flee and avoid from hiting
+    # the method do this by following the chase tree
     def attack_or_flee(self, start, enemypos, scared_from_enemy):
         width = self.grid_width
         height = self.grid_height
