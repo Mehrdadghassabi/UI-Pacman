@@ -28,9 +28,9 @@ tbts = False
 Inf = 1000
 # Inf
 prefer = 3
-
-
 # how much do we prefer straight than tele
+this_level = []
+minus_Inf = -1000
 
 
 # manhattan distance of 2 node
@@ -459,9 +459,78 @@ class Agent(BaseAgent):
             goal = available_goals[0]
         return goal
 
+    def breadth_first_search_trap(self, meturn, remaindep):
+        global this_level
+        if remaindep == 0:
+            return
+        nex_level = []
+        for nodtup in this_level:
+            print("remain depth: " + str(remaindep))
+            if meturn:
+                nodxtrn = nodtup[0]
+                nodytrn = nodtup[1]
+                nodxNtrn = nodtup[2]
+                nodyNtrn = nodtup[3]
+            else:
+                nodxtrn = nodtup[2]
+                nodytrn = nodtup[3]
+                nodxNtrn = nodtup[0]
+                nodyNtrn = nodtup[1]
+            nodtrn = (nodxtrn, nodytrn)
+            nodNtrn = (nodxNtrn, nodyNtrn)
+            neis = self.neighbors(nodtrn)
+            for neibor in neis:
+                if meturn:
+                    nodchldx = neibor[0]
+                    nodchldy = neibor[1]
+                    child = (nodchldx, nodchldy, nodxNtrn, nodyNtrn)
+                else:
+                    nodx = neibor[0]
+                    nody = neibor[1]
+                    child = (nodxNtrn, nodyNtrn, nodchldx, nodchldy)
+                nex_level.append(child)
+            # this_level = nex_level
+            # counter = counter + 1
+            # print(counter)
+        print(this_level)
+        print("______________________________________________________________")
+        this_level = nex_level
+        self.breadth_first_search_trap(meturn, remaindep - 1)
+
+    def is_thisـproper_to_trap(self, start, enemypos, scared_from_enemy):
+        global this_level
+        startx = start[0]
+        starty = start[1]
+        enemyposx = enemypos[0]
+        enemyposy = enemypos[1]
+        if self.grid_height > self.grid_width:
+            maxdep = int(self.grid_width / 2)
+        else:
+            maxdep = int(self.grid_height / 2)
+
+        r = [startx, starty, enemyposx, enemyposy]
+        # root = Node(r)
+        print("max dep: " + str(maxdep))
+        this_level = [r]
+        nex_level = []
+        meturn = True
+        counter = 0
+
+        if manhattan(start, enemypos) == 1 and scared_from_enemy:
+            return True, r
+
+        self.breadth_first_search_trap(meturn, maxdep)
+        # print("--------------------------------------------------")
+        return True, r
+
+    # return a boolean to determine that
+    # is agent1 scared from agent2 ?
+    # if agent2 score is more than first one then agent1 is scared
+    # this method is useful for attack&flee
+    # if agent1 doesnt scare from agent2 it can follow agent2 and hit it
     def agent_one_scaring_from_agent_two(self, scorone, scortwo):
         return scorone < scortwo
-
+    
     def attack_or_flee(self, start, enemypos, scared_from_enemy):
         width = self.grid_width
         height = self.grid_height
@@ -472,7 +541,7 @@ class Agent(BaseAgent):
         qx = int(height / 2)
         qy = int(width / 2)
         if scared_from_enemy:
-            print("im scareeed")
+            # print("im scareeed")
             if qi - qm > 0:
                 if qj - qn > 0:
                     if qx - qi > 0:
@@ -565,8 +634,8 @@ class Agent(BaseAgent):
                         else:
                             return Action.LEFT
         else:
-            print("im brave")
-            print(manhattan(start, enemypos))
+            # print("im brave")
+            # print(manhattan(start, enemypos))
             if qi - qm > 0:
                 if qj - qn > 0:
                     if qx - qi > 0:
@@ -634,6 +703,9 @@ class Agent(BaseAgent):
         scared_from_enemy = self.agent_one_scaring_from_agent_two(myscore, enemyscore)
 
         available_goals, unavailable_goals = self.goals_list(start)
+
+        propare, root = self.is_thisـproper_to_trap(start, enemypos, scared_from_enemy)
+        # print(root)
 
         if not bool(available_goals):
             return self.attack_or_flee(start, enemypos, scared_from_enemy)
