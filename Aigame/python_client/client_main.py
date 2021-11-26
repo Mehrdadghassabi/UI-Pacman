@@ -31,6 +31,8 @@ prefer = 3
 # how much do we prefer straight than tele
 this_level = []
 # current depth of me-enemy tree for trapping
+meenemy_tree = []
+# tree for choose to trap
 minus_Inf = -1000
 
 
@@ -441,6 +443,10 @@ class Agent(BaseAgent):
         print("my current position: " + str(start))
         # print("distance to goal: " + str(cost_so_far[goal]))
 
+    def print_meenmy_tree_at_given_dep(self):
+        print(meenemy_tree)
+        print("--------------------------------------------------")
+
     # some goals are available due to their points but there is no direct path to them
     # just make them unavailable!!
     # and if there is no available goal target the nearest teleport
@@ -464,11 +470,12 @@ class Agent(BaseAgent):
     # following minimax algorithm
     def breadth_first_search_trap(self, meturn, remaindep):
         global this_level
+        global meenemy_tree
         if remaindep == 0:
             return
         nex_level = []
         for nodtup in this_level:
-            print("remain depth: " + str(remaindep))
+            # print("remain depth: " + str(remaindep))
             if meturn:
                 nodxtrn = nodtup[0]
                 nodytrn = nodtup[1]
@@ -495,8 +502,10 @@ class Agent(BaseAgent):
             # this_level = nex_level
             # counter = counter + 1
             # print(counter)
-        print(this_level)
-        print("______________________________________________________________")
+        # print(this_level)
+        # print("______________________________________________________________")
+        tredep = (remaindep, this_level)
+        meenemy_tree.append(tredep)
         this_level = nex_level
         self.breadth_first_search_trap(meturn, remaindep - 1)
 
@@ -515,17 +524,19 @@ class Agent(BaseAgent):
             maxdep = int(self.grid_height / 2)
 
         r = [startx, starty, enemyposx, enemyposy]
-        # root = Node(r)
-        print("max dep: " + str(maxdep))
         this_level = [r]
-        nex_level = []
         meturn = True
-        counter = 0
+        # root = Node(r)
+        # print("max dep: " + str(maxdep))
+        # nex_level = []
+        # counter = 0
 
         if manhattan(start, enemypos) == 1 and scared_from_enemy:
             return True, r
 
         self.breadth_first_search_trap(meturn, maxdep)
+        self.print_meenmy_tree_at_given_dep()
+        # print(meenemy_tree.index(0))
         # print("--------------------------------------------------")
         return True, r
 
