@@ -309,15 +309,16 @@ class Agent(BaseAgent):
     # sorting the available_goals
     # having more goal_score_function means
     # the goal has a higher priority
-    def sort_available_goals(self, size, current):
+    def sort_available_goals(self, size, current, enemycurrent, scared_from_enemy):
         # print(size)
         for x in range(size):
             small = x
             for j in range(x, size):
                 # print("hi: " + str(self.goal_score_function(available_goals[j], current)))
                 # print("bye: " + str(self.goal_score_function(available_goals[small], current)))
-                if self.goal_score_function(available_goals[j], current) > self.goal_score_function(
-                        available_goals[small], current):
+                if self.goal_score_function(available_goals[j], current,
+                                            enemycurrent, scared_from_enemy) > self.goal_score_function(
+                        available_goals[small], current, enemycurrent, scared_from_enemy):
                     small = j
             temp = available_goals[small]
             available_goals[small] = available_goals[x]
@@ -332,23 +333,38 @@ class Agent(BaseAgent):
     # the function doesnt give us the best answer
     # so lets use Q learning
     # updating...
-    def goal_score_function(self, goal, current):
+    def goal_score_function(self, goal, current, enemycurrent, scared_from_enemy):
         x = goal[0]
         y = goal[1]
         distance = manhattan(current, goal)
+        enemydis = manhattan(enemycurrent, goal)
+
+        # current is myposition
+        # distance is manhattan distance of me and the goal
+        # enemydis is manhattan distance of enemy and the goal
+        # enemycurrent is enemy position
         # print(" Agent score " + str(self.agent_scores[0]))
 
         if self.grid[x][y] == "1":
-            return 10 / distance ** 2
+            if scared_from_enemy:
+                return (10 / distance ** 2) + enemydis
+            if not scared_from_enemy:
+                return 10 / distance ** 2
         elif self.grid[x][y] == "2" and self.agent_scores[0] > 15:
-
-            return 25 / distance ** 2
+            if scared_from_enemy:
+                return (25 / distance ** 2) + enemydis
+            if not scared_from_enemy:
+                return 25 / distance ** 2
         elif self.grid[x][y] == "3" and self.agent_scores[0] > 50:
-
-            return 35 / distance ** 2
+            if scared_from_enemy:
+                return (35 / distance ** 2) + enemydis
+            if not scared_from_enemy:
+                return 35 / distance ** 2
         elif self.grid[x][y] == "4" and self.agent_scores[0] > 140:
-
-            return 75 / distance ** 2
+            if scared_from_enemy:
+                return (75 / distance ** 2) + enemydis
+            if not scared_from_enemy:
+                return 75 / distance ** 2
         elif self.grid[x][y] == "T" and tbts:
             return 1000
         else:
@@ -443,12 +459,18 @@ class Agent(BaseAgent):
         print("my current position: " + str(start))
         # print("distance to goal: " + str(cost_so_far[goal]))
 
+    # just for debugging
+    # printing meenmy tree at given depth
+    # this tree help us to understand is this proper to trap now?
     def print_meenmy_tree_at_given_dep(self, maxdep, dep):
         # print(meenemy_tree)
         revdep = abs(maxdep + 1 - dep)
         print(mmeenemy_tree[revdep])
         print("--------------------------------------------------")
 
+    # just for debugging
+    # get meenmy tree at given depth
+    # this tree help us to understand is this proper to trap now?
     def get_meenmy_tree_at_given_dep(self, maxdep, dep):
         revdep = abs(maxdep + 1 - dep)
         return mmeenemy_tree[revdep]
@@ -768,7 +790,7 @@ class Agent(BaseAgent):
         # self.print_availability(start)
         if not bool(aclis):
             # print("im in part one step is: " + str(i))
-            available_goals = self.sort_available_goals(len(available_goals), start)
+            available_goals = self.sort_available_goals(len(available_goals), start, enemypos, scared_from_enemy)
             if not bool(available_goals):
                 return self.attack_or_flee(start, enemypos, scared_from_enemy)
                 # return Action.NOOP
