@@ -3,8 +3,8 @@ from queue import PriorityQueue
 
 # increasing :) (:
 # it was phase 1 final day and im so exhausted
-# total days spent = 9
-# total hours spent = 80
+# total days spent = 13
+# total hours spent = 100
 
 
 i = 0
@@ -42,7 +42,10 @@ def manhattan(start, goal):
     # print("man: " + str(abs(start[0] - goal[0]) + abs(start[1] - goal[1])))
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
 
-
+# the agent class
+# an intelligent agent to beat human
+# in speical kind of Pacman game
+# Pacman_UOI
 class Agent(BaseAgent):
 
     # return von Neumann neighbours of a node
@@ -318,7 +321,7 @@ class Agent(BaseAgent):
                 # print("bye: " + str(self.goal_score_function(available_goals[small], current)))
                 if self.goal_score_function(available_goals[j], current,
                                             enemycurrent, scared_from_enemy) > self.goal_score_function(
-                        available_goals[small], current, enemycurrent, scared_from_enemy):
+                    available_goals[small], current, enemycurrent, scared_from_enemy):
                     small = j
             temp = available_goals[small]
             available_goals[small] = available_goals[x]
@@ -816,6 +819,8 @@ class Agent(BaseAgent):
         return self.find_appropriate_turn()
 
 
+# the main function
+# do the turn
 if __name__ == '__main__':
     data = Agent().play()
     print("FINISH : ", data)
