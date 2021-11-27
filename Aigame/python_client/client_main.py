@@ -31,7 +31,7 @@ prefer = 3
 # how much do we prefer straight than tele
 this_level = []
 # current depth of me-enemy tree for trapping
-meenemy_tree = []
+mmeenemy_tree = {}
 # tree for choose to trap
 minus_Inf = -1000
 
@@ -443,9 +443,15 @@ class Agent(BaseAgent):
         print("my current position: " + str(start))
         # print("distance to goal: " + str(cost_so_far[goal]))
 
-    def print_meenmy_tree_at_given_dep(self):
-        print(meenemy_tree)
+    def print_meenmy_tree_at_given_dep(self, maxdep, dep):
+        # print(meenemy_tree)
+        revdep = abs(maxdep + 1 - dep)
+        print(mmeenemy_tree[revdep])
         print("--------------------------------------------------")
+
+    def get_meenmy_tree_at_given_dep(self, maxdep, dep):
+        revdep = abs(maxdep + 1 - dep)
+        return mmeenemy_tree[revdep]
 
     # some goals are available due to their points but there is no direct path to them
     # just make them unavailable!!
@@ -471,6 +477,8 @@ class Agent(BaseAgent):
     def breadth_first_search_trap(self, meturn, remaindep):
         global this_level
         global meenemy_tree
+        global mmeenemy_tree
+        # tredep = {}
         if remaindep == 0:
             return
         nex_level = []
@@ -495,8 +503,8 @@ class Agent(BaseAgent):
                     nodchldy = neibor[1]
                     child = (nodchldx, nodchldy, nodxNtrn, nodyNtrn)
                 else:
-                    nodx = neibor[0]
-                    nody = neibor[1]
+                    nodchldx = neibor[0]
+                    nodchldy = neibor[1]
                     child = (nodxNtrn, nodyNtrn, nodchldx, nodchldy)
                 nex_level.append(child)
             # this_level = nex_level
@@ -504,10 +512,11 @@ class Agent(BaseAgent):
             # print(counter)
         # print(this_level)
         # print("______________________________________________________________")
-        tredep = (remaindep, this_level)
-        meenemy_tree.append(tredep)
+        # tredep = (remaindep, this_level)
+        # meenemy_tree.append(tredep)
+        mmeenemy_tree[remaindep] = this_level
         this_level = nex_level
-        self.breadth_first_search_trap(meturn, remaindep - 1)
+        self.breadth_first_search_trap(not meturn, remaindep - 1)
 
     # following minimax algorithm
     # this method tell us
@@ -518,6 +527,7 @@ class Agent(BaseAgent):
         starty = start[1]
         enemyposx = enemypos[0]
         enemyposy = enemypos[1]
+        isprop = False
         if self.grid_height > self.grid_width:
             maxdep = int(self.grid_width / 2)
         else:
@@ -532,13 +542,24 @@ class Agent(BaseAgent):
         # counter = 0
 
         if manhattan(start, enemypos) == 1 and scared_from_enemy:
-            return True, r
+            return True
 
         self.breadth_first_search_trap(meturn, maxdep)
-        self.print_meenmy_tree_at_given_dep()
+        # self.print_meenmy_tree_at_given_dep(maxdep, 1)
+        for x in range(maxdep - 1):
+            # print(x+1)
+            # print("#######################################")
+            menemytreeatdepx = self.get_meenmy_tree_at_given_dep(maxdep, x + 1)
+            for nod in menemytreeatdepx:
+                bo = (nod[2] == startx) and (nod[3] == starty)
+                isprop = isprop or bo
+                # print(bo)
+                # print(nod)
+            # self.print_meenmy_tree_at_given_dep(maxdep, x + 1)
+        # self.print_meenmy_tree()
         # print(meenemy_tree.index(0))
         # print("--------------------------------------------------")
-        return True, r
+        return isprop
 
     # agent one is you and agent two is enemy
     # return a boolean to determine that
@@ -728,7 +749,9 @@ class Agent(BaseAgent):
 
         available_goals, unavailable_goals = self.goals_list(start)
 
-        propare, root = self.is_thisـproper_to_trap(start, enemypos, scared_from_enemy)
+        propare = self.is_thisـproper_to_trap(start, enemypos, scared_from_enemy)
+        if propare:
+            return Action.TRAP
         # print(root)
 
         if not bool(available_goals):
