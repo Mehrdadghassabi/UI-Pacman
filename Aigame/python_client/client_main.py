@@ -48,6 +48,10 @@ mecurrscore = 45
 # my score in current step
 enemcurrscore = 45
 # enemy score in current step
+learning_rate = 0.8
+# Learning rate
+gamma = 0.95
+# Discounting rate
 minus_Inf = -1000
 
 
@@ -56,6 +60,7 @@ minus_Inf = -1000
 def manhattan(start, goal):
     # print("man: " + str(abs(start[0] - goal[0]) + abs(start[1] - goal[1])))
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
+
 
 # get myposition & enemy position
 # from the qtable row
@@ -85,6 +90,7 @@ def initqtable():
     # print("xlen: "+str(xlen))
     # print(qtable[1][1934])
 
+
 # get qtable row
 # from myposition & enemy position
 def getx_from_meenemy(mepos, enepos):
@@ -97,6 +103,19 @@ def getx_from_meenemy(mepos, enepos):
     x = menum * (hei * wid) + enenum
 
     return x
+
+# saving qtable to a file
+# help us create model (;
+def save_the_qtable():
+    with open('qtable.pickle', 'wb') as handle:
+        pickle.dump(qtable, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+# get the qtable from a file
+# help us create model (;
+def get_the_qtable():
+    with open('qtable.pickle', 'rb') as f:
+        oldqtable = pickle.load(f)
+    return oldqtable
 
 
 # the agent class
@@ -117,22 +136,29 @@ class Agent(BaseAgent):
         global mecurrscore
         global enemcurrscore
         global qtable
+        global learning_rate
+        global gamma
         x = getx_from_meenemy(mepos, enemypos)
+        oldqtable = get_the_qtable()
         # print("x: " + str(x))
         # print(wid * wid * hei * hei)
         reward = (mecurrscore - meperviscore) + (enemperviscore - enemcurrscore)
         if action == Action.UP:
             y = 0
-            qtable[y][x] = reward
+            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            # qtable[y][x] = reward
         elif action == Action.LEFT:
             y = 1
-            qtable[y][x] = reward
+            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            # qtable[y][x] = reward
         elif action == Action.DOWN:
             y = 2
-            qtable[y][x] = reward
+            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            # qtable[y][x] = reward
         elif action == Action.RIGHT:
             y = 3
-            qtable[y][x] = reward
+            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            # qtable[y][x] = reward
 
     # return von Neumann neighbours of a node
     # note that :
@@ -144,7 +170,6 @@ class Agent(BaseAgent):
         height = self.grid_height
         x = node[0]
         j = node[1]
-
         neis = []
         if x == 0 and j == 0:
             nei1 = (1, 0)
@@ -557,6 +582,9 @@ class Agent(BaseAgent):
         print(mmeenemy_tree[revdep])
         print("--------------------------------------------------")
 
+    # just for debugging
+    # printing my score and enemy score
+    # in current step and previous step
     def print_meenmy_currprev_score(self):
         global enemcurrscore
         global mecurrscore
@@ -843,6 +871,8 @@ class Agent(BaseAgent):
                     else:
                         return Action.RIGHT
 
+    # do sth with first step
+    # useful for learning
     def do_with_firsti(self):
         global wid
         global hei
@@ -872,8 +902,8 @@ class Agent(BaseAgent):
         global mecurrscore
         global enemperviscore
         global meperviscore
-        if i == 0:
-            self.do_with_firsti()
+        # if i == 0:
+            # self.do_with_firsti()
         i = i + 1
         # self.print_score_turn(self.agent_scores[0])
         start = self.find_state("A")
@@ -947,6 +977,5 @@ if __name__ == '__main__':
     data = Agent().play()
     # Store data (serialize)
     # global qtable
-    with open('filename.pickle', 'wb') as handle:
-        pickle.dump(qtable, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    # save_the_qtable()
     print("FINISH : ", data)
