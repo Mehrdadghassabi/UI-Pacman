@@ -1,5 +1,6 @@
 from base import BaseAgent, Action
 from queue import PriorityQueue
+import pickle
 
 # increasing :) (:
 # it was phase 1 final day and im so exhausted
@@ -33,6 +34,20 @@ this_level = []
 # current depth of me-enemy tree for trapping
 mmeenemy_tree = {}
 # tree for choose to trap
+qtable = [[]]
+# qtable for reinforcement learning
+wid = 0
+# the width of grid
+hei = 0
+# the height of grid
+meperviscore = 45
+# my score in previous step
+enemperviscore = 45
+# enemy score in previous step
+mecurrscore = 45
+# my score in current step
+enemcurrscore = 45
+# enemy score in current step
 minus_Inf = -1000
 
 
@@ -42,11 +57,82 @@ def manhattan(start, goal):
     # print("man: " + str(abs(start[0] - goal[0]) + abs(start[1] - goal[1])))
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
 
+# get myposition & enemy position
+# from the qtable row
+def get_meenemy_pos_fromx(x):
+    menum = int(x / (wid * hei))
+    enenum = x % (wid * hei)
+    mex = int(menum / wid)
+    mey = menum % wid
+    enex = int(enenum / wid)
+    eney = enenum % wid
+    mepos = (mex, mey)
+    enepos = (enex, eney)
+
+    return mepos, enepos
+
+
+# Q-learning is an off policy reinforcement learning algorithm
+# that seeks to find the best action to take given the current state.
+# It’s considered off-policy because the q-learning function learns from actions
+# that are outside the current policy,
+# like taking random actions, and therefore a policy isn’t needed.
+def initqtable():
+    global qtable
+    xlen = wid * wid * hei * hei
+    ylen = 4
+    qtable = [[0 for x in range(xlen)] for y in range(ylen)]
+    # print("xlen: "+str(xlen))
+    # print(qtable[1][1934])
+
+# get qtable row
+# from myposition & enemy position
+def getx_from_meenemy(mepos, enepos):
+    mex = mepos[0]
+    mey = mepos[1]
+    enex = enepos[0]
+    eney = enepos[1]
+    menum = mex * wid + mey
+    enenum = enex * wid + eney
+    x = menum * (hei * wid) + enenum
+
+    return x
+
+
 # the agent class
 # an intelligent agent to beat human
 # in speical kind of Pacman game
 # Pacman_UOI
 class Agent(BaseAgent):
+
+    # Q-learning is an off policy reinforcement learning algorithm
+    # that seeks to find the best action to take given the current state.
+    # It’s considered off-policy because the q-learning function
+    # learns from actions that are outside the current policy,
+    # like taking random actions, and therefore a policy isn’t needed.
+    # More specifically q learning seeks to learn policy that maximize the reward
+    def updateqtable(self, action, mepos, enemypos):
+        global meperviscore
+        global enemperviscore
+        global mecurrscore
+        global enemcurrscore
+        global qtable
+        x = getx_from_meenemy(mepos, enemypos)
+        # print("x: " + str(x))
+        # print(wid * wid * hei * hei)
+        reward = (mecurrscore - meperviscore) + (enemperviscore - enemcurrscore)
+        if action == Action.UP:
+            y = 0
+            qtable[y][x] = reward
+        elif action == Action.LEFT:
+            y = 1
+            qtable[y][x] = reward
+        elif action == Action.DOWN:
+            y = 2
+            qtable[y][x] = reward
+        elif action == Action.RIGHT:
+            y = 3
+            qtable[y][x] = reward
 
     # return von Neumann neighbours of a node
     # note that :
@@ -471,6 +557,17 @@ class Agent(BaseAgent):
         print(mmeenemy_tree[revdep])
         print("--------------------------------------------------")
 
+    def print_meenmy_currprev_score(self):
+        global enemcurrscore
+        global mecurrscore
+        global enemperviscore
+        global meperviscore
+
+        print("meperviscore: " + str(meperviscore))
+        print("mecurrscore: " + str(mecurrscore))
+        print("enemperviscore: " + str(enemperviscore))
+        print("enemcurrscore: " + str(enemcurrscore))
+
     # just for debugging
     # get meenmy tree at given depth
     # this tree help us to understand is this proper to trap now?
@@ -746,6 +843,13 @@ class Agent(BaseAgent):
                     else:
                         return Action.RIGHT
 
+    def do_with_firsti(self):
+        global wid
+        global hei
+        wid = self.grid_width
+        hei = self.grid_height
+        initqtable()
+
     # Ok we are at step number i
     # find the current state of agent A
     # then we find available_goals due to score by goals_list (regardless of the path)
@@ -764,6 +868,12 @@ class Agent(BaseAgent):
         global aclis
         global available_goals
         global unavailable_goals
+        global enemcurrscore
+        global mecurrscore
+        global enemperviscore
+        global meperviscore
+        if i == 0:
+            self.do_with_firsti()
         i = i + 1
         # self.print_score_turn(self.agent_scores[0])
         start = self.find_state("A")
@@ -771,6 +881,13 @@ class Agent(BaseAgent):
         myscore = self.agent_scores[0]
         enemyscore = self.agent_scores[1]
         scared_from_enemy = self.agent_one_scaring_from_agent_two(myscore, enemyscore)
+
+        enemperviscore = enemcurrscore
+        meperviscore = mecurrscore
+        mecurrscore = myscore
+        enemcurrscore = enemyscore
+
+        # self.print_meenmy_currprev_score()
 
         available_goals, unavailable_goals = self.goals_list(start)
 
@@ -780,7 +897,9 @@ class Agent(BaseAgent):
         # print(root)
 
         if not bool(available_goals):
-            return self.attack_or_flee(start, enemypos, scared_from_enemy)
+            act = self.attack_or_flee(start, enemypos, scared_from_enemy)
+            self.updateqtable(act, start, enemypos)
+            return act
             # return Action.NOOP
 
         goal = available_goals[0]
@@ -795,7 +914,9 @@ class Agent(BaseAgent):
             # print("im in part one step is: " + str(i))
             available_goals = self.sort_available_goals(len(available_goals), start, enemypos, scared_from_enemy)
             if not bool(available_goals):
-                return self.attack_or_flee(start, enemypos, scared_from_enemy)
+                ac = self.attack_or_flee(start, enemypos, scared_from_enemy)
+                self.updateqtable(ac, start, enemypos)
+                return ac
                 # return Action.NOOP
             goal = available_goals[0]
             cost_so_far, came_from = self.cost(start, goal)
@@ -807,6 +928,7 @@ class Agent(BaseAgent):
             # print("im in part two step is: " + str(i))
             first_ac = aclis[0]
             aclis.remove(first_ac)
+            self.updateqtable(first_ac, start, enemypos)
             return first_ac
         else:
             # print("im in part three step is: " + str(i))
@@ -823,4 +945,8 @@ class Agent(BaseAgent):
 # do the turn
 if __name__ == '__main__':
     data = Agent().play()
+    # Store data (serialize)
+    # global qtable
+    with open('filename.pickle', 'wb') as handle:
+        pickle.dump(qtable, handle, protocol=pickle.HIGHEST_PROTOCOL)
     print("FINISH : ", data)
