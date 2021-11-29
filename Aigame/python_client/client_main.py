@@ -40,6 +40,8 @@ wid = 0
 # the width of grid
 hei = 0
 # the height of grid
+num_of_trap = 0
+# how many trap
 meperviscore = 45
 # my score in previous step
 enemperviscore = 45
@@ -104,11 +106,13 @@ def getx_from_meenemy(mepos, enepos):
 
     return x
 
+
 # saving qtable to a file
 # help us create model (;
 def save_the_qtable():
     with open('qtable.pickle', 'wb') as handle:
         pickle.dump(qtable, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 # get the qtable from a file
 # help us create model (;
@@ -247,14 +251,14 @@ class Agent(BaseAgent):
     #  We can assign lower costs to encourage moving on roads,
     #  higher costs to avoid forests, higher costs to discourage going near enemies, and more.
     #  When movement costs vary, we use this instead of Breadth First Search.
-    # A* is a modification of Dijkstra’s Algorithm that is optimized for a single destination.
-    # Dijkstra’s Algorithm can find paths to all locations;
-    # A* finds paths to one location, or the closest of several locations.
-    # It prioritizes paths that seem to be leading closer to a goal.
-    # 3: A* Dijkstra’s Algorithm works well to find the shortest path,
-    # but it wastes time exploring in directions that aren’t promising.
-    # Greedy Best First Search explores in promising directions but it may not find the shortest path.
-    # The A* algorithm uses both the actual distance from the start and the estimated distance to the goal.
+    #  A* is a modification of Dijkstra’s Algorithm that is optimized for a single destination.
+    #  Dijkstra’s Algorithm can find paths to all locations;
+    #  A* finds paths to one location, or the closest of several locations.
+    #  It prioritizes paths that seem to be leading closer to a goal.
+    #  3: A* Dijkstra’s Algorithm works well to find the shortest path,
+    #  but it wastes time exploring in directions that aren’t promising.
+    #  Greedy Best First Search explores in promising directions but it may not find the shortest path.
+    #  The A* algorithm uses both the actual distance from the start and the estimated distance to the goal.
     def cost(self, start, goal):
         frontier = PriorityQueue()
         frontier.put((0, start))
@@ -285,6 +289,32 @@ class Agent(BaseAgent):
                         # print("nnext: " + str(nnext[0]) + str(nnext[1]) + " priority: " + str(priority))
                     came_from[nnext] = current[1]
         return cost_so_far, came_from
+
+    #  Find paths from start to goal
+    #  We’re not only trying to find the shortest distance
+    #  We also want to take into account travel time
+    #  There is 3 approach for doing this
+    #  1: Breadth First Search explores equally in all directions
+    #  This is an incredibly useful algorithm, not only for regular path finding,
+    #  but also for procedural map generation, flow field pathfinding,
+    #  distance maps, and other types of map analysis.
+    def cost_best_first_search(self, start, goal):
+        frontier = PriorityQueue()
+        frontier.put(start, 0)
+        came_from = dict()
+        came_from[start] = None
+
+        while not frontier.empty():
+            current = frontier.get()
+
+            if current == goal:
+                break
+
+        for next in self.neighbors(current):
+            if next not in came_from:
+                priority = manhattan(goal, next)
+                frontier.put(next, priority)
+                came_from[next] = current
 
     # finding available_goals due to score by goals_list (regardless of the path)
     # considering manhattan distance from the current state
@@ -902,8 +932,9 @@ class Agent(BaseAgent):
         global mecurrscore
         global enemperviscore
         global meperviscore
+        global num_of_trap
         # if i == 0:
-            # self.do_with_firsti()
+        # self.do_with_firsti()
         i = i + 1
         # self.print_score_turn(self.agent_scores[0])
         start = self.find_state("A")
@@ -922,7 +953,8 @@ class Agent(BaseAgent):
         available_goals, unavailable_goals = self.goals_list(start)
 
         propare = self.is_thisـproper_to_trap(start, enemypos, scared_from_enemy)
-        if propare:
+        if propare and myscore >= 35 * num_of_trap:
+            num_of_trap = num_of_trap + 1
             return Action.TRAP
         # print(root)
 
