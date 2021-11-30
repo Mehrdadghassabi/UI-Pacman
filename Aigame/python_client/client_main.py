@@ -3,9 +3,9 @@ from queue import PriorityQueue
 import pickle
 
 # increasing :) (:
-# it was phase 1 final day and im so exhausted
-# total days spent = 13
-# total hours spent = 100
+# it was phase 2 final day and im so so exhausted
+# total days spent = 14
+# total hours spent = 140
 
 
 i = 0
@@ -54,6 +54,7 @@ learning_rate = 0.8
 # Learning rate
 gamma = 0.95
 # Discounting rate
+having_time = True
 minus_Inf = -1000
 
 
@@ -960,7 +961,7 @@ class Agent(BaseAgent):
 
         if not bool(available_goals):
             act = self.attack_or_flee(start, enemypos, scared_from_enemy)
-            self.updateqtable(act, start, enemypos)
+            # self.updateqtable(act, start, enemypos)
             return act
             # return Action.NOOP
 
@@ -977,7 +978,7 @@ class Agent(BaseAgent):
             available_goals = self.sort_available_goals(len(available_goals), start, enemypos, scared_from_enemy)
             if not bool(available_goals):
                 ac = self.attack_or_flee(start, enemypos, scared_from_enemy)
-                self.updateqtable(ac, start, enemypos)
+                # self.updateqtable(ac, start, enemypos)
                 return ac
                 # return Action.NOOP
             goal = available_goals[0]
@@ -990,7 +991,7 @@ class Agent(BaseAgent):
             # print("im in part two step is: " + str(i))
             first_ac = aclis[0]
             aclis.remove(first_ac)
-            self.updateqtable(first_ac, start, enemypos)
+            # self.updateqtable(first_ac, start, enemypos)
             return first_ac
         else:
             # print("im in part three step is: " + str(i))
