@@ -1,10 +1,11 @@
 from base import BaseAgent, Action
 from queue import PriorityQueue
+import pickle
 
 # increasing :) (:
-# it was phase 1 final day and im so exhausted
-# total days spent = 9
-# total hours spent = 80
+# it was phase 2 final day and im so so exhausted
+# total days spent = 14
+# total hours spent = 140
 
 
 i = 0
@@ -29,6 +30,32 @@ Inf = 1000
 # Inf
 prefer = 3
 # how much do we prefer straight than tele
+this_level = []
+# current depth of me-enemy tree for trapping
+mmeenemy_tree = {}
+# tree for choose to trap
+qtable = [[]]
+# qtable for reinforcement learning
+wid = 0
+# the width of grid
+hei = 0
+# the height of grid
+num_of_trap = 0
+# how many trap
+meperviscore = 45
+# my score in previous step
+enemperviscore = 45
+# enemy score in previous step
+mecurrscore = 45
+# my score in current step
+enemcurrscore = 45
+# enemy score in current step
+learning_rate = 0.8
+# Learning rate
+gamma = 0.95
+# Discounting rate
+having_time = True
+minus_Inf = -1000
 
 
 # manhattan distance of 2 node
@@ -38,7 +65,105 @@ def manhattan(start, goal):
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
 
 
+# get myposition & enemy position
+# from the qtable row
+def get_meenemy_pos_fromx(x):
+    menum = int(x / (wid * hei))
+    enenum = x % (wid * hei)
+    mex = int(menum / wid)
+    mey = menum % wid
+    enex = int(enenum / wid)
+    eney = enenum % wid
+    mepos = (mex, mey)
+    enepos = (enex, eney)
+
+    return mepos, enepos
+
+
+# Q-learning is an off policy reinforcement learning algorithm
+# that seeks to find the best action to take given the current state.
+# It’s considered off-policy because the q-learning function learns from actions
+# that are outside the current policy,
+# like taking random actions, and therefore a policy isn’t needed.
+def initqtable():
+    global qtable
+    xlen = wid * wid * hei * hei
+    ylen = 4
+    qtable = [[0 for x in range(xlen)] for y in range(ylen)]
+    # print("xlen: "+str(xlen))
+    # print(qtable[1][1934])
+
+
+# get qtable row
+# from myposition & enemy position
+def getx_from_meenemy(mepos, enepos):
+    mex = mepos[0]
+    mey = mepos[1]
+    enex = enepos[0]
+    eney = enepos[1]
+    menum = mex * wid + mey
+    enenum = enex * wid + eney
+    x = menum * (hei * wid) + enenum
+
+    return x
+
+
+# saving qtable to a file
+# help us create model (;
+def save_the_qtable():
+    with open('qtable.pickle', 'wb') as handle:
+        pickle.dump(qtable, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+# get the qtable from a file
+# help us create model (;
+def get_the_qtable():
+    with open('qtable.pickle', 'rb') as f:
+        oldqtable = pickle.load(f)
+    return oldqtable
+
+
+# the agent class
+# an intelligent agent to beat human
+# in speical kind of Pacman game
+# Pacman_UOI
 class Agent(BaseAgent):
+
+    # Q-learning is an off policy reinforcement learning algorithm
+    # that seeks to find the best action to take given the current state.
+    # It’s considered off-policy because the q-learning function
+    # learns from actions that are outside the current policy,
+    # like taking random actions, and therefore a policy isn’t needed.
+    # More specifically q learning seeks to learn policy that maximize the reward
+    def updateqtable(self, action, mepos, enemypos):
+        global meperviscore
+        global enemperviscore
+        global mecurrscore
+        global enemcurrscore
+        global qtable
+        global learning_rate
+        global gamma
+        x = getx_from_meenemy(mepos, enemypos)
+        oldqtable = get_the_qtable()
+        # print("x: " + str(x))
+        # print(wid * wid * hei * hei)
+        reward = (mecurrscore - meperviscore) + (enemperviscore - enemcurrscore)
+        if action == Action.UP:
+            y = 0
+            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            # qtable[y][x] = reward
+        elif action == Action.LEFT:
+            y = 1
+            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            # qtable[y][x] = reward
+        elif action == Action.DOWN:
+            y = 2
+            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            # qtable[y][x] = reward
+        elif action == Action.RIGHT:
+            y = 3
+            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            # qtable[y][x] = reward
 
     # return von Neumann neighbours of a node
     # note that :
@@ -50,7 +175,6 @@ class Agent(BaseAgent):
         height = self.grid_height
         x = node[0]
         j = node[1]
-
         neis = []
         if x == 0 and j == 0:
             nei1 = (1, 0)
@@ -128,14 +252,14 @@ class Agent(BaseAgent):
     #  We can assign lower costs to encourage moving on roads,
     #  higher costs to avoid forests, higher costs to discourage going near enemies, and more.
     #  When movement costs vary, we use this instead of Breadth First Search.
-    # A* is a modification of Dijkstra’s Algorithm that is optimized for a single destination.
-    # Dijkstra’s Algorithm can find paths to all locations;
-    # A* finds paths to one location, or the closest of several locations.
-    # It prioritizes paths that seem to be leading closer to a goal.
-    # 3: A* Dijkstra’s Algorithm works well to find the shortest path,
-    # but it wastes time exploring in directions that aren’t promising.
-    # Greedy Best First Search explores in promising directions but it may not find the shortest path.
-    # The A* algorithm uses both the actual distance from the start and the estimated distance to the goal.
+    #  A* is a modification of Dijkstra’s Algorithm that is optimized for a single destination.
+    #  Dijkstra’s Algorithm can find paths to all locations;
+    #  A* finds paths to one location, or the closest of several locations.
+    #  It prioritizes paths that seem to be leading closer to a goal.
+    #  3: A* Dijkstra’s Algorithm works well to find the shortest path,
+    #  but it wastes time exploring in directions that aren’t promising.
+    #  Greedy Best First Search explores in promising directions but it may not find the shortest path.
+    #  The A* algorithm uses both the actual distance from the start and the estimated distance to the goal.
     def cost(self, start, goal):
         frontier = PriorityQueue()
         frontier.put((0, start))
@@ -167,6 +291,32 @@ class Agent(BaseAgent):
                     came_from[nnext] = current[1]
         return cost_so_far, came_from
 
+    #  Find paths from start to goal
+    #  We’re not only trying to find the shortest distance
+    #  We also want to take into account travel time
+    #  There is 3 approach for doing this
+    #  1: Breadth First Search explores equally in all directions
+    #  This is an incredibly useful algorithm, not only for regular path finding,
+    #  but also for procedural map generation, flow field pathfinding,
+    #  distance maps, and other types of map analysis.
+    def cost_best_first_search(self, start, goal):
+        frontier = PriorityQueue()
+        frontier.put(start, 0)
+        came_from = dict()
+        came_from[start] = None
+
+        while not frontier.empty():
+            current = frontier.get()
+
+            if current == goal:
+                break
+
+        for next in self.neighbors(current):
+            if next not in came_from:
+                priority = manhattan(goal, next)
+                frontier.put(next, priority)
+                came_from[next] = current
+
     # finding available_goals due to score by goals_list (regardless of the path)
     # considering manhattan distance from the current state
     def goals_list(self, current):
@@ -177,6 +327,8 @@ class Agent(BaseAgent):
                 # print(self.grid[i][j])
                 if self.grid[x][j] == "1":
                     tup1 = (x, j)
+                    # THE FIRST ******* Bug
+                    # if self.agent_scores[0] >= 15 + manhattan(current, tup1) and yellow_diamond_eaten <= 15:
                     if yellow_diamond_eaten <= 15:
                         # print("Scpo2 : " + str(15 + manhattan(current, tup1)))
                         lavailable_goals.append(tup1)
@@ -304,15 +456,16 @@ class Agent(BaseAgent):
     # sorting the available_goals
     # having more goal_score_function means
     # the goal has a higher priority
-    def sort_available_goals(self, size, current):
+    def sort_available_goals(self, size, current, enemycurrent, scared_from_enemy):
         # print(size)
         for x in range(size):
             small = x
             for j in range(x, size):
                 # print("hi: " + str(self.goal_score_function(available_goals[j], current)))
                 # print("bye: " + str(self.goal_score_function(available_goals[small], current)))
-                if self.goal_score_function(available_goals[j], current) > self.goal_score_function(
-                        available_goals[small], current):
+                if self.goal_score_function(available_goals[j], current,
+                                            enemycurrent, scared_from_enemy) > self.goal_score_function(
+                    available_goals[small], current, enemycurrent, scared_from_enemy):
                     small = j
             temp = available_goals[small]
             available_goals[small] = available_goals[x]
@@ -327,23 +480,38 @@ class Agent(BaseAgent):
     # the function doesnt give us the best answer
     # so lets use Q learning
     # updating...
-    def goal_score_function(self, goal, current):
+    def goal_score_function(self, goal, current, enemycurrent, scared_from_enemy):
         x = goal[0]
         y = goal[1]
         distance = manhattan(current, goal)
+        enemydis = manhattan(enemycurrent, goal)
+
+        # current is myposition
+        # distance is manhattan distance of me and the goal
+        # enemydis is manhattan distance of enemy and the goal
+        # enemycurrent is enemy position
         # print(" Agent score " + str(self.agent_scores[0]))
 
         if self.grid[x][y] == "1":
-            return 10 / distance ** 2
+            if scared_from_enemy:
+                return (10 / distance ** 2) + enemydis
+            if not scared_from_enemy:
+                return 10 / distance ** 2
         elif self.grid[x][y] == "2" and self.agent_scores[0] > 15:
-
-            return 25 / distance ** 2
+            if scared_from_enemy:
+                return (25 / distance ** 2) + enemydis
+            if not scared_from_enemy:
+                return 25 / distance ** 2
         elif self.grid[x][y] == "3" and self.agent_scores[0] > 50:
-
-            return 35 / distance ** 2
+            if scared_from_enemy:
+                return (35 / distance ** 2) + enemydis
+            if not scared_from_enemy:
+                return 35 / distance ** 2
         elif self.grid[x][y] == "4" and self.agent_scores[0] > 140:
-
-            return 75 / distance ** 2
+            if scared_from_enemy:
+                return (75 / distance ** 2) + enemydis
+            if not scared_from_enemy:
+                return 75 / distance ** 2
         elif self.grid[x][y] == "T" and tbts:
             return 1000
         else:
@@ -438,6 +606,36 @@ class Agent(BaseAgent):
         print("my current position: " + str(start))
         # print("distance to goal: " + str(cost_so_far[goal]))
 
+    # just for debugging
+    # printing meenmy tree at given depth
+    # this tree help us to understand is this proper to trap now?
+    def print_meenmy_tree_at_given_dep(self, maxdep, dep):
+        # print(meenemy_tree)
+        revdep = abs(maxdep + 1 - dep)
+        print(mmeenemy_tree[revdep])
+        print("--------------------------------------------------")
+
+    # just for debugging
+    # printing my score and enemy score
+    # in current step and previous step
+    def print_meenmy_currprev_score(self):
+        global enemcurrscore
+        global mecurrscore
+        global enemperviscore
+        global meperviscore
+
+        print("meperviscore: " + str(meperviscore))
+        print("mecurrscore: " + str(mecurrscore))
+        print("enemperviscore: " + str(enemperviscore))
+        print("enemcurrscore: " + str(enemcurrscore))
+
+    # just for debugging
+    # get meenmy tree at given depth
+    # this tree help us to understand is this proper to trap now?
+    def get_meenmy_tree_at_given_dep(self, maxdep, dep):
+        revdep = abs(maxdep + 1 - dep)
+        return mmeenemy_tree[revdep]
+
     # some goals are available due to their points but there is no direct path to them
     # just make them unavailable!!
     # and if there is no available goal target the nearest teleport
@@ -457,6 +655,264 @@ class Agent(BaseAgent):
             goal = available_goals[0]
         return goal
 
+    # bfs search for the me-enemy tree
+    # following minimax algorithm
+    def breadth_first_search_trap(self, meturn, remaindep):
+        global this_level
+        global meenemy_tree
+        global mmeenemy_tree
+        # tredep = {}
+        if remaindep == 0:
+            return
+        nex_level = []
+        for nodtup in this_level:
+            # print("remain depth: " + str(remaindep))
+            if meturn:
+                nodxtrn = nodtup[0]
+                nodytrn = nodtup[1]
+                nodxNtrn = nodtup[2]
+                nodyNtrn = nodtup[3]
+            else:
+                nodxtrn = nodtup[2]
+                nodytrn = nodtup[3]
+                nodxNtrn = nodtup[0]
+                nodyNtrn = nodtup[1]
+            nodtrn = (nodxtrn, nodytrn)
+            nodNtrn = (nodxNtrn, nodyNtrn)
+            neis = self.neighbors(nodtrn)
+            for neibor in neis:
+                if meturn:
+                    nodchldx = neibor[0]
+                    nodchldy = neibor[1]
+                    child = (nodchldx, nodchldy, nodxNtrn, nodyNtrn)
+                else:
+                    nodchldx = neibor[0]
+                    nodchldy = neibor[1]
+                    child = (nodxNtrn, nodyNtrn, nodchldx, nodchldy)
+                nex_level.append(child)
+            # this_level = nex_level
+            # counter = counter + 1
+            # print(counter)
+        # print(this_level)
+        # print("______________________________________________________________")
+        # tredep = (remaindep, this_level)
+        # meenemy_tree.append(tredep)
+        mmeenemy_tree[remaindep] = this_level
+        this_level = nex_level
+        self.breadth_first_search_trap(not meturn, remaindep - 1)
+
+    # following minimax algorithm
+    # this method tell us
+    # that is this propare to trap now?
+    def is_thisـproper_to_trap(self, start, enemypos, scared_from_enemy):
+        global this_level
+        startx = start[0]
+        starty = start[1]
+        enemyposx = enemypos[0]
+        enemyposy = enemypos[1]
+        isprop = False
+        if self.grid_height > self.grid_width:
+            maxdep = int(self.grid_width / 2)
+        else:
+            maxdep = int(self.grid_height / 2)
+
+        r = [startx, starty, enemyposx, enemyposy]
+        this_level = [r]
+        meturn = True
+        # root = Node(r)
+        # print("max dep: " + str(maxdep))
+        # nex_level = []
+        # counter = 0
+
+        if manhattan(start, enemypos) == 1 and scared_from_enemy:
+            return True
+
+        self.breadth_first_search_trap(meturn, maxdep)
+        # self.print_meenmy_tree_at_given_dep(maxdep, 1)
+        for x in range(maxdep - 1):
+            # print(x+1)
+            # print("#######################################")
+            menemytreeatdepx = self.get_meenmy_tree_at_given_dep(maxdep, x + 1)
+            for nod in menemytreeatdepx:
+                bo = (nod[2] == startx) and (nod[3] == starty)
+                isprop = isprop or bo
+                # print(bo)
+                # print(nod)
+            # self.print_meenmy_tree_at_given_dep(maxdep, x + 1)
+        # self.print_meenmy_tree()
+        # print(meenemy_tree.index(0))
+        # print("--------------------------------------------------")
+        return isprop
+
+    # agent one is you and agent two is enemy
+    # return a boolean to determine that
+    # is agent1 scared from agent2 ?
+    # if agent2 score is more than first one then agent1 is scared
+    # this method is useful for attack&flee
+    # if agent1 doesnt scare from agent2 it can follow agent2 and hit it
+    def agent_one_scaring_from_agent_two(self, scorone, scortwo):
+        return scorone < scortwo
+
+    # by having your position and enemy position
+    # if youre not scared from the enemy
+    # you can chased the enemy and hit it
+    # and if youre scared from enemy
+    # you should flee and avoid from hiting
+    # the method do this by following the chase tree
+    def attack_or_flee(self, start, enemypos, scared_from_enemy):
+        width = self.grid_width
+        height = self.grid_height
+        qi = start[0]
+        qj = start[1]
+        qm = enemypos[0]
+        qn = enemypos[1]
+        qx = int(height / 2)
+        qy = int(width / 2)
+        if scared_from_enemy:
+            # print("im scareeed")
+            if qi - qm > 0:
+                if qj - qn > 0:
+                    if qx - qi > 0:
+                        return Action.DOWN
+                    elif qy - qj > 0:
+                        return Action.RIGHT
+                    else:
+                        if qj == width - 1:
+                            return Action.LEFT
+                        else:
+                            return Action.RIGHT
+                elif qj - qn == 0:
+                    if qx - qi > 0:
+                        return Action.DOWN
+                    elif qy - qj > 0:
+                        return Action.RIGHT
+                    elif qj - qy > 0:
+                        return Action.LEFT
+                    else:
+                        if qj == width - 1:
+                            return Action.LEFT
+                        else:
+                            return Action.RIGHT
+                elif qj - qn < 0:
+                    if qx - qi > 0:
+                        return Action.DOWN
+                    elif qj - qy > 0:
+                        return Action.LEFT
+                    else:
+                        if qj == 0:
+                            return Action.RIGHT
+                        else:
+                            return Action.LEFT
+            if qi - qm == 0:
+                if qj - qn > 0:
+                    if qy - qj > 0:
+                        return Action.RIGHT
+                    elif qx - qi > 0:
+                        return Action.DOWN
+                    elif qi - qx > 0:
+                        return Action.UP
+                    else:
+                        if qi == 0:
+                            return Action.DOWN
+                        else:
+                            return Action.UP
+                if qj - qn < 0:
+                    if qj - qy > 0:
+                        return Action.LEFT
+                    elif qx - qi > 0:
+                        return Action.DOWN
+                    elif qi - qx > 0:
+                        return Action.UP
+                    else:
+                        if qi == 0:
+                            return Action.DOWN
+                        else:
+                            return Action.UP
+            if qi - qm < 0:
+                if qj - qn > 0:
+                    if qi - qx > 0:
+                        return Action.UP
+                    elif qy - qj > 0:
+                        return Action.RIGHT
+                    else:
+                        if qj == width - 1:
+                            return Action.LEFT
+                        else:
+                            return Action.RIGHT
+                elif qj - qn == 0:
+                    if qi - qx > 0:
+                        return Action.UP
+                    elif qy - qj > 0:
+                        return Action.RIGHT
+                    elif qj - qy > 0:
+                        return Action.LEFT
+                    else:
+                        if qj == width - 1:
+                            return Action.LEFT
+                        else:
+                            return Action.RIGHT
+                elif qj - qn < 0:
+                    if qi - qx > 0:
+                        return Action.UP
+                    elif qj - qy > 0:
+                        return Action.LEFT
+                    else:
+                        if qj == 0:
+                            return Action.RIGHT
+                        else:
+                            return Action.LEFT
+        else:
+            # print("im brave")
+            # print(manhattan(start, enemypos))
+            if qi - qm > 0:
+                if qj - qn > 0:
+                    if qx - qi > 0:
+                        return Action.UP
+                    elif qy - qj > 0:
+                        return Action.LEFT
+                    else:
+                        return Action.LEFT
+                elif qj - qn == 0:
+                    return Action.DOWN
+                elif qj - qn < 0:
+                    if qx - qi > 0:
+                        return Action.UP
+                    elif qj - qy > 0:
+                        return Action.RIGHT
+                    else:
+                        return Action.RIGHT
+            if qi - qm == 0:
+                if qj - qn > 0:
+                    return Action.LEFT
+                if qj - qn < 0:
+                    return Action.RIGHT
+            if qi - qm < 0:
+                if qj - qn > 0:
+                    if qi - qx > 0:
+                        return Action.DOWN
+                    elif qy - qj > 0:
+                        return Action.LEFT
+                    else:
+                        return Action.LEFT
+                elif qj - qn == 0:
+                    return Action.DOWN
+                elif qj - qn < 0:
+                    if qi - qx > 0:
+                        return Action.DOWN
+                    elif qj - qy > 0:
+                        return Action.RIGHT
+                    else:
+                        return Action.RIGHT
+
+    # do sth with first step
+    # useful for learning
+    def do_with_firsti(self):
+        global wid
+        global hei
+        wid = self.grid_width
+        hei = self.grid_height
+        initqtable()
+
     # Ok we are at step number i
     # find the current state of agent A
     # then we find available_goals due to score by goals_list (regardless of the path)
@@ -475,13 +931,46 @@ class Agent(BaseAgent):
         global aclis
         global available_goals
         global unavailable_goals
+        global enemcurrscore
+        global mecurrscore
+        global enemperviscore
+        global meperviscore
+        global num_of_trap
+        # if i == 0:
+        # self.do_with_firsti()
         i = i + 1
-        self.print_score_turn(self.agent_scores[0])
-        start = self.find_state("A")
+        # self.print_score_turn(self.agent_scores[0])
+
+        # THE SECOND ******* Bug
+        # start = self.find_state("A")
+        # enemypos = self.find_state("B")
+        start = self.find_state(self.character)
+        enemypos = self.find_state("B" if self.character == "A" else "A")
+
+        myscore = self.agent_scores[0]
+        enemyscore = self.agent_scores[1]
+        scared_from_enemy = self.agent_one_scaring_from_agent_two(myscore, enemyscore)
+
+        enemperviscore = enemcurrscore
+        meperviscore = mecurrscore
+        mecurrscore = myscore
+        enemcurrscore = enemyscore
+
+        # self.print_meenmy_currprev_score()
+
         available_goals, unavailable_goals = self.goals_list(start)
 
+        propare = self.is_thisـproper_to_trap(start, enemypos, scared_from_enemy)
+        if propare and myscore >= 35 * num_of_trap:
+            num_of_trap = num_of_trap + 1
+            return Action.TRAP
+        # print(root)
+
         if not bool(available_goals):
-           return Action.NOOP
+            act = self.attack_or_flee(start, enemypos, scared_from_enemy)
+            # self.updateqtable(act, start, enemypos)
+            return act
+            # return Action.NOOP
 
         goal = available_goals[0]
         cost_so_far, came_from = self.cost(start, goal)
@@ -490,25 +979,29 @@ class Agent(BaseAgent):
         if self.tele_better_than_straight(start, goal):
             nearest_teleports = self.find_nearest_teleport(start)
             available_goals.append(nearest_teleports)
-        self.print_availability(start)
+        # self.print_availability(start)
         if not bool(aclis):
-            print("im in part one step is: " + str(i))
-            available_goals = self.sort_available_goals(len(available_goals), start)
+            # print("im in part one step is: " + str(i))
+            available_goals = self.sort_available_goals(len(available_goals), start, enemypos, scared_from_enemy)
             if not bool(available_goals):
-                return Action.NOOP
+                ac = self.attack_or_flee(start, enemypos, scared_from_enemy)
+                # self.updateqtable(ac, start, enemypos)
+                return ac
+                # return Action.NOOP
             goal = available_goals[0]
             cost_so_far, came_from = self.cost(start, goal)
             goal = self.make_wall_goal_unavailable(start, goal, came_from)
             aclis = self.eat_the_goal(start, goal, came_from)
 
-            print("the path is=== " + str(aclis))
+            # print("the path is=== " + str(aclis))
         if bool(aclis):
-            print("im in part two step is: " + str(i))
+            # print("im in part two step is: " + str(i))
             first_ac = aclis[0]
             aclis.remove(first_ac)
+            # self.updateqtable(first_ac, start, enemypos)
             return first_ac
         else:
-            print("im in part three step is: " + str(i))
+            # print("im in part three step is: " + str(i))
             available_goals.remove(goal)
             return Action.TELEPORT
 
@@ -518,6 +1011,11 @@ class Agent(BaseAgent):
         return self.find_appropriate_turn()
 
 
+# the main function
+# do the turn
 if __name__ == '__main__':
     data = Agent().play()
+    # Store data (serialize)
+    # global qtable
+    # save_the_qtable()
     print("FINISH : ", data)
