@@ -138,29 +138,25 @@ class Agent(BaseAgent):
         global learning_rate
         global gamma
         x = getx_from_meenemy(mepos)
-        oldqtable = get_the_qtable()
+        # oldqtable = get_the_qtable()
         # print("x: " + str(x))
         # print(wid * wid * hei * hei)
         reward = (mecurrscore - meperviscore)
         if action == Action.UP:
             y = 0
-            qtable[x][y] = oldqtable[x][y] + learning_rate * (reward + (gamma * 75) - oldqtable[x][y])
-            print(qtable[x][y])
+            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * 75) - qtable[x][y])
             # qtable[y][x] = reward
         elif action == Action.LEFT:
             y = 1
-            qtable[x][y] = oldqtable[x][y] + learning_rate * (reward + (gamma * 75) - oldqtable[x][y])
+            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * 75) - qtable[x][y])
             # qtable[y][x] = reward
-            print(qtable[x][y])
         elif action == Action.DOWN:
             y = 2
-            qtable[x][y] = oldqtable[x][y] + learning_rate * (reward + (gamma * 75) - oldqtable[x][y])
-            print(qtable[x][y])
+            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * 75) - qtable[x][y])
             # qtable[y][x] = reward
         elif action == Action.RIGHT:
             y = 3
-            qtable[x][y] = oldqtable[x][y] + learning_rate * (reward + (gamma * 75) - oldqtable[x][y])
-            print(qtable[x][y])
+            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * 75) - qtable[x][y])
             # qtable[y][x] = reward
 
     # return von Neumann neighbours of a node
@@ -902,15 +898,48 @@ class Agent(BaseAgent):
                     else:
                         return Action.RIGHT
 
+    def find_the_best_learned_action(self, mepos, table):
+        x = getx_from_meenemy(mepos)
+        number_list = table[x]
+        max_value = max(number_list)
+        max_index = number_list.index(max_value)
+
+        neis = self.neighbors(mepos)
+        for nei in neis:
+            x = nei[0] - mepos[0]
+            y = nei[1] - mepos[1]
+
+            if x == 1 and y == 0:
+                print("DOWN IS AVAIALABLE")
+            if x == -1 and y == 0:
+                print("UP IS AVAIALABLE")
+            if x == 0 and y == 1:
+                print("RIGHT IS AVAIALABLE")
+            if x == 0 and y == -1:
+                print("LEFT IS AVAIALABLE")
+
+        if max_index == 0:
+            return Action.UP
+        elif max_index == 1:
+            return Action.LEFT
+        elif max_index == 2:
+            return Action.DOWN
+        elif max_index == 3:
+            return Action.RIGHT
+        else:
+            return Action.NOOP
+
     # do sth with first step
     # useful for learning
     def do_with_firsti(self):
         global wid
         global hei
+        global qtable
         wid = self.grid_width
         hei = self.grid_height
+        qtable = get_the_qtable()
         # initqtable ONLY ONCE
-        # initqtable()
+        initqtable()
 
     # Ok we are at step number i
     # find the current state of agent A
@@ -936,7 +965,7 @@ class Agent(BaseAgent):
         global meperviscore
         global num_of_trap
         if i == 0:
-          self.do_with_firsti()
+            self.do_with_firsti()
         i = i + 1
         # self.print_score_turn(self.agent_scores[0])
         # THE SECOND ******* Bug
@@ -1028,12 +1057,13 @@ class Agent(BaseAgent):
         mecurrscore = myscore
         enemcurrscore = enemyscore
 
-        ac = random.choice(
-            [Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT])
+        ac = self.find_the_best_learned_action(start, qtable)
         self.updateqtable(ac, start)
 
+        # print(qtable)
+        return ac
         # for ite in range(4):
-            # print(qtable[ite][getx_from_meenemy(start, enemypos)])
+        # print(qtable[ite][getx_from_meenemy(start, enemypos)])
         # self.print_meenmy_currprev_score()
 
     # Do the turn
