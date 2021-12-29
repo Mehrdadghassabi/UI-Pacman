@@ -1,5 +1,6 @@
 from base import BaseAgent, Action
 from queue import PriorityQueue
+import random
 import pickle
 
 # increasing :) (:
@@ -69,15 +70,11 @@ def manhattan(start, goal):
 # from the qtable row
 def get_meenemy_pos_fromx(x):
     menum = int(x / (wid * hei))
-    enenum = x % (wid * hei)
     mex = int(menum / wid)
     mey = menum % wid
-    enex = int(enenum / wid)
-    eney = enenum % wid
     mepos = (mex, mey)
-    enepos = (enex, eney)
 
-    return mepos, enepos
+    return mepos
 
 
 # Q-learning is an off policy reinforcement learning algorithm
@@ -87,23 +84,20 @@ def get_meenemy_pos_fromx(x):
 # like taking random actions, and therefore a policy isn’t needed.
 def initqtable():
     global qtable
-    xlen = wid * wid * hei * hei
+    xlen = wid * hei
     ylen = 4
-    qtable = [[0 for x in range(xlen)] for y in range(ylen)]
+    qtable = [[0 for x in range(ylen)] for y in range(xlen)]
     # print("xlen: "+str(xlen))
     # print(qtable[1][1934])
 
 
 # get qtable row
 # from myposition & enemy position
-def getx_from_meenemy(mepos, enepos):
+def getx_from_meenemy(mepos):
     mex = mepos[0]
     mey = mepos[1]
-    enex = enepos[0]
-    eney = enepos[1]
     menum = mex * wid + mey
-    enenum = enex * wid + eney
-    x = menum * (hei * wid) + enenum
+    x = menum
 
     return x
 
@@ -135,7 +129,7 @@ class Agent(BaseAgent):
     # learns from actions that are outside the current policy,
     # like taking random actions, and therefore a policy isn’t needed.
     # More specifically q learning seeks to learn policy that maximize the reward
-    def updateqtable(self, action, mepos, enemypos):
+    def updateqtable(self, action, mepos):
         global meperviscore
         global enemperviscore
         global mecurrscore
@@ -143,26 +137,30 @@ class Agent(BaseAgent):
         global qtable
         global learning_rate
         global gamma
-        x = getx_from_meenemy(mepos, enemypos)
+        x = getx_from_meenemy(mepos)
         oldqtable = get_the_qtable()
         # print("x: " + str(x))
         # print(wid * wid * hei * hei)
-        reward = (mecurrscore - meperviscore) + (enemperviscore - enemcurrscore)
+        reward = (mecurrscore - meperviscore)
         if action == Action.UP:
             y = 0
-            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            qtable[x][y] = oldqtable[x][y] + learning_rate * (reward + (gamma * 75) - oldqtable[x][y])
+            print(qtable[x][y])
             # qtable[y][x] = reward
         elif action == Action.LEFT:
             y = 1
-            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            qtable[x][y] = oldqtable[x][y] + learning_rate * (reward + (gamma * 75) - oldqtable[x][y])
             # qtable[y][x] = reward
+            print(qtable[x][y])
         elif action == Action.DOWN:
             y = 2
-            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            qtable[x][y] = oldqtable[x][y] + learning_rate * (reward + (gamma * 75) - oldqtable[x][y])
+            print(qtable[x][y])
             # qtable[y][x] = reward
         elif action == Action.RIGHT:
             y = 3
-            qtable[y][x] = oldqtable[y][x] + learning_rate * (reward + (gamma * 75) - oldqtable[y][x])
+            qtable[x][y] = oldqtable[x][y] + learning_rate * (reward + (gamma * 75) - oldqtable[x][y])
+            print(qtable[x][y])
             # qtable[y][x] = reward
 
     # return von Neumann neighbours of a node
@@ -911,7 +909,8 @@ class Agent(BaseAgent):
         global hei
         wid = self.grid_width
         hei = self.grid_height
-        initqtable()
+        # initqtable ONLY ONCE
+        # initqtable()
 
     # Ok we are at step number i
     # find the current state of agent A
@@ -936,11 +935,10 @@ class Agent(BaseAgent):
         global enemperviscore
         global meperviscore
         global num_of_trap
-        # if i == 0:
-        # self.do_with_firsti()
+        if i == 0:
+          self.do_with_firsti()
         i = i + 1
         # self.print_score_turn(self.agent_scores[0])
-
         # THE SECOND ******* Bug
         # start = self.find_state("A")
         # enemypos = self.find_state("B")
@@ -1005,10 +1003,43 @@ class Agent(BaseAgent):
             available_goals.remove(goal)
             return Action.TELEPORT
 
+    def find_appropriate_turnـby_machine_learning(self):
+        global i
+        global enemcurrscore
+        global mecurrscore
+        global enemperviscore
+        global meperviscore
+        global qtable
+
+        if i == 0:
+            self.do_with_firsti()
+        i = i + 1
+
+        # self.print_score_turn(self.agent_scores[0])
+
+        start = self.find_state(self.character)
+        enemypos = self.find_state("B" if self.character == "A" else "A")
+
+        myscore = self.agent_scores[0]
+        enemyscore = self.agent_scores[1]
+
+        enemperviscore = enemcurrscore
+        meperviscore = mecurrscore
+        mecurrscore = myscore
+        enemcurrscore = enemyscore
+
+        ac = random.choice(
+            [Action.UP, Action.DOWN, Action.LEFT, Action.RIGHT])
+        self.updateqtable(ac, start)
+
+        # for ite in range(4):
+            # print(qtable[ite][getx_from_meenemy(start, enemypos)])
+        # self.print_meenmy_currprev_score()
+
     # Do the turn
     # updating...
     def do_turn(self) -> Action:
-        return self.find_appropriate_turn()
+        return self.find_appropriate_turnـby_machine_learning()
 
 
 # the main function
@@ -1016,6 +1047,5 @@ class Agent(BaseAgent):
 if __name__ == '__main__':
     data = Agent().play()
     # Store data (serialize)
-    # global qtable
-    # save_the_qtable()
+    save_the_qtable()
     print("FINISH : ", data)
