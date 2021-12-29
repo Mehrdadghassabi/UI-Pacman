@@ -899,10 +899,8 @@ class Agent(BaseAgent):
                         return Action.RIGHT
 
     def find_the_best_learned_action(self, mepos, table):
-        x = getx_from_meenemy(mepos)
-        number_list = table[x]
-        max_value = max(number_list)
-        max_index = number_list.index(max_value)
+        di = dict()
+        mex = getx_from_meenemy(mepos)
 
         neis = self.neighbors(mepos)
         for nei in neis:
@@ -910,22 +908,33 @@ class Agent(BaseAgent):
             y = nei[1] - mepos[1]
 
             if x == 1 and y == 0:
-                print("DOWN IS AVAIALABLE")
+                di["DOWN"] = qtable[mex][2]
+                # print("DOWN IS AVAIALABLE")
+                # print(di["DOWN"])
             if x == -1 and y == 0:
-                print("UP IS AVAIALABLE")
+                di["UP"] = qtable[mex][0]
+                # print("UP IS AVAIALABLE")
+                # print(di["UP"])
             if x == 0 and y == 1:
-                print("RIGHT IS AVAIALABLE")
+                di["RIGHT"] = qtable[mex][3]
+                # print("RIGHT IS AVAIALABLE")
+                # print(di["RIGHT"])
             if x == 0 and y == -1:
-                print("LEFT IS AVAIALABLE")
+                di["LEFT"] = qtable[mex][1]
+                # print("LEFT IS AVAIALABLE")
+                # print(di["LEFT"])
 
-        if max_index == 0:
-            return Action.UP
-        elif max_index == 1:
-            return Action.LEFT
-        elif max_index == 2:
+        max_key = max(di, key=di.get)
+        # print(max_key)
+
+        if max_key == "DOWN":
             return Action.DOWN
-        elif max_index == 3:
+        elif max_key == "UP":
+            return Action.UP
+        elif max_key == "RIGHT":
             return Action.RIGHT
+        elif max_key == "LEFT":
+            return Action.LEFT
         else:
             return Action.NOOP
 
