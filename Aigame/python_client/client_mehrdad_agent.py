@@ -1,7 +1,8 @@
 from base import BaseAgent, Action
 from queue import PriorityQueue
-import random
 import pickle
+import random
+import math
 
 # increasing :) (:
 # it was phase 2 final day and im so so exhausted
@@ -56,6 +57,17 @@ learning_rate = 0.8
 gamma = 0.95
 # Discounting rate
 having_time = True
+# Having_time to run A*
+epsilon = 1.0
+# Exploration rate
+max_epsilon = 1.0
+# Exploration probability at start
+min_epsilon = 0.01
+# Minimum exploration probability
+decay_rate = 0.1
+# Exponential decay rate for exploration prob
+episode = 0
+# Episod num
 minus_Inf = -1000
 
 
@@ -85,7 +97,7 @@ def get_meenemy_pos_fromx(x):
 def initqtable():
     global qtable
     xlen = wid * hei
-    ylen = 4
+    ylen = 6
     qtable = [[0 for x in range(ylen)] for y in range(xlen)]
     # print("xlen: "+str(xlen))
     # print(qtable[1][1934])
@@ -109,6 +121,12 @@ def save_the_qtable():
         pickle.dump(qtable, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+def save_the_episodes():
+    with open('episode.pickle', 'wb') as handle:
+        # print(episode)
+        pickle.dump(episode, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
 # get the qtable from a file
 # help us create model (;
 def get_the_qtable():
@@ -117,11 +135,78 @@ def get_the_qtable():
     return oldqtable
 
 
+def get_the_episodes():
+    with open('episode.pickle', 'rb') as f:
+        episode = pickle.load(f)
+    return episode
+
+
+def set_episode_to_one():
+    episode = 1
+    save_the_episodes()
+
+
 # the agent class
 # an intelligent agent to beat human
 # in speical kind of Pacman game
 # Pacman_UOI
 class Agent(BaseAgent):
+
+    def estimated_future_reward(self, table, mepos, ac):
+        d = dict()
+        if ac == Action.UP:
+            new_mepos = (mepos[0], mepos[1] - 1)
+            mex = getx_from_meenemy(new_mepos)
+            d["UP"] = table[mex][0]
+            d["LEFT"] = table[mex][1]
+            d["DOWN"] = table[mex][2]
+            d["RIGHT"] = table[mex][3]
+            d["TELEPORT"] = table[mex][4]
+            d["TRAP"] = table[mex][5]
+        if ac == Action.DOWN:
+            new_mepos = (mepos[0], mepos[1] + 1)
+            mex = getx_from_meenemy(new_mepos)
+            d["UP"] = table[mex][0]
+            d["LEFT"] = table[mex][1]
+            d["DOWN"] = table[mex][2]
+            d["RIGHT"] = table[mex][3]
+            d["TELEPORT"] = table[mex][4]
+            d["TRAP"] = table[mex][5]
+        if ac == Action.RIGHT:
+            new_mepos = (mepos[0] + 1, mepos[1])
+            mex = getx_from_meenemy(new_mepos)
+            d["UP"] = table[mex][0]
+            d["LEFT"] = table[mex][1]
+            d["DOWN"] = table[mex][2]
+            d["RIGHT"] = table[mex][3]
+            d["TELEPORT"] = table[mex][4]
+            d["TRAP"] = table[mex][5]
+        if ac == Action.LEFT:
+            new_mepos = (mepos[0] - 1, mepos[1])
+            mex = getx_from_meenemy(new_mepos)
+            d["UP"] = table[mex][0]
+            d["LEFT"] = table[mex][1]
+            d["DOWN"] = table[mex][2]
+            d["RIGHT"] = table[mex][3]
+            d["TELEPORT"] = table[mex][4]
+            d["TRAP"] = table[mex][5]
+
+        max_key = max(d, key=d.get)
+
+        if max_key == "DOWN":
+            return table[mex][2]
+        elif max_key == "UP":
+            return table[mex][0]
+        elif max_key == "RIGHT":
+            return table[mex][3]
+        elif max_key == "LEFT":
+            return table[mex][1]
+        elif max_key == "TELEPORT":
+            return table[mex][4]
+        elif max_key == "TRAP":
+            return table[mex][5]
+        else:
+            return Action.NOOP
 
     # Q-learning is an off policy reinforcement learning algorithm
     # that seeks to find the best action to take given the current state.
@@ -144,19 +229,31 @@ class Agent(BaseAgent):
         reward = (mecurrscore - meperviscore)
         if action == Action.UP:
             y = 0
-            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * 75) - qtable[x][y])
+            efr = self.estimated_future_reward(qtable, mepos, Action.UP)
+            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr) - qtable[x][y])
+
+            # self.print_updating_qtable(efr, reward, x, y, qtable)
             # qtable[y][x] = reward
         elif action == Action.LEFT:
             y = 1
-            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * 75) - qtable[x][y])
+            efr = self.estimated_future_reward(qtable, mepos, Action.LEFT)
+            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr) - qtable[x][y])
+
+            # self.print_updating_qtable(efr, reward, x, y, qtable)
             # qtable[y][x] = reward
         elif action == Action.DOWN:
             y = 2
-            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * 75) - qtable[x][y])
+            efr = self.estimated_future_reward(qtable, mepos, Action.DOWN)
+            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr) - qtable[x][y])
+
+            # self.print_updating_qtable(efr, reward, x, y, qtable)
             # qtable[y][x] = reward
         elif action == Action.RIGHT:
             y = 3
-            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * 75) - qtable[x][y])
+            efr = self.estimated_future_reward(qtable, mepos, Action.RIGHT)
+            qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr) - qtable[x][y])
+
+            # self.print_updating_qtable(efr, reward, x, y, qtable)
             # qtable[y][x] = reward
 
     # return von Neumann neighbours of a node
@@ -623,6 +720,21 @@ class Agent(BaseAgent):
         print("enemperviscore: " + str(enemperviscore))
         print("enemcurrscore: " + str(enemcurrscore))
 
+    def print_rewards(self, max_key, mepos, di):
+        print(max_key)
+        print("mepos: ")
+        print(mepos)
+        print("di")
+        print(di)
+
+    def print_updating_qtable(self, efr, reward, x, y, table):
+        print("estimated_future_reward: " + str(efr))
+        print(self.agent_scores[0])
+        print("REWARD is : " + str(reward))
+        print("REFORMED REWARD is : ")
+        print(learning_rate * (reward + (gamma * 75) - table[x][y]))
+        print("---------------------------------------------------")
+
     # just for debugging
     # get meenmy tree at given depth
     # this tree help us to understand is this proper to trap now?
@@ -898,35 +1010,45 @@ class Agent(BaseAgent):
                     else:
                         return Action.RIGHT
 
-    def find_the_best_learned_action(self, mepos, table):
+    def find_the_best_learned_action(self, mepos, table, mecurrscore):
+        global num_of_trap
         di = dict()
         mex = getx_from_meenemy(mepos)
 
         neis = self.neighbors(mepos)
+        # print(neis)
+        # print(mepos)
         for nei in neis:
             x = nei[0] - mepos[0]
             y = nei[1] - mepos[1]
 
-            if x == 1 and y == 0:
-                di["DOWN"] = qtable[mex][2]
+            if x == 1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                di["DOWN"] = table[mex][2]
+                # print(self.grid[nei[0]][nei[1]])
                 # print("DOWN IS AVAIALABLE")
                 # print(di["DOWN"])
-            if x == -1 and y == 0:
-                di["UP"] = qtable[mex][0]
+            if x == -1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                di["UP"] = table[mex][0]
+                # print(self.grid[nei[0]][nei[1]])
                 # print("UP IS AVAIALABLE")
                 # print(di["UP"])
-            if x == 0 and y == 1:
-                di["RIGHT"] = qtable[mex][3]
+            if x == 0 and y == 1 and self.grid[nei[0]][nei[1]] != "W":
+                di["RIGHT"] = table[mex][3]
+                # print(self.grid[nei[0]][nei[1]])
                 # print("RIGHT IS AVAIALABLE")
                 # print(di["RIGHT"])
-            if x == 0 and y == -1:
-                di["LEFT"] = qtable[mex][1]
+            if x == 0 and y == -1 and self.grid[nei[0]][nei[1]] != "W":
+                di["LEFT"] = table[mex][1]
+                # print(self.grid[nei[0]][nei[1]])
                 # print("LEFT IS AVAIALABLE")
                 # print(di["LEFT"])
+        if self.grid[mepos[0]][mepos[1]] == "T":
+            di["TELEPORT"] = table[mex][4]
 
         max_key = max(di, key=di.get)
-        # print(max_key)
 
+        # self.print_rewards(max_key, mepos, di)
+        # print("----------------------------------")
         if max_key == "DOWN":
             return Action.DOWN
         elif max_key == "UP":
@@ -935,6 +1057,64 @@ class Agent(BaseAgent):
             return Action.RIGHT
         elif max_key == "LEFT":
             return Action.LEFT
+        elif max_key == "TELEPORT":
+            return Action.TELEPORT
+        elif max_key == "TRAP":
+            return Action.TRAP
+        else:
+            return Action.NOOP
+
+    def choose_possible_random(self, mepos):
+        global num_of_trap
+        possac = []
+        mex = getx_from_meenemy(mepos)
+
+        neis = self.neighbors(mepos)
+        # print(neis)
+        # print(mepos)
+        for nei in neis:
+            x = nei[0] - mepos[0]
+            y = nei[1] - mepos[1]
+
+            if x == 1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                possac.append("DOWN")
+                # print(self.grid[nei[0]][nei[1]])
+                # print("DOWN IS AVAIALABLE")
+                # print(di["DOWN"])
+            if x == -1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                possac.append("UP")
+                # print(self.grid[nei[0]][nei[1]])
+                # print("UP IS AVAIALABLE")
+                # print(di["UP"])
+            if x == 0 and y == 1 and self.grid[nei[0]][nei[1]] != "W":
+                possac.append("RIGHT")
+                # print(self.grid[nei[0]][nei[1]])
+                # print("RIGHT IS AVAIALABLE")
+                # print(di["RIGHT"])
+            if x == 0 and y == -1 and self.grid[nei[0]][nei[1]] != "W":
+                possac.append("LEFT")
+                # print(self.grid[nei[0]][nei[1]])
+                # print("LEFT IS AVAIALABLE")
+                # print(di["LEFT"])
+        if self.grid[mepos[0]][mepos[1]] == "T":
+            possac.append("TELEPORT")
+
+        # print(possac)
+
+        key = random.choice(possac)
+
+        # self.print_rewards(max_key, mepos, di)
+        # print("----------------------------------")
+        if key == "DOWN":
+            return Action.DOWN
+        elif key == "UP":
+            return Action.UP
+        elif key == "RIGHT":
+            return Action.RIGHT
+        elif key == "LEFT":
+            return Action.LEFT
+        elif key == "TELEPORT":
+            return Action.TELEPORT
         else:
             return Action.NOOP
 
@@ -944,11 +1124,17 @@ class Agent(BaseAgent):
         global wid
         global hei
         global qtable
+        global mecurrscore
+        global enemcurrscore
+        global episode
         wid = self.grid_width
         hei = self.grid_height
         qtable = get_the_qtable()
+        mecurrscore = self.agent_scores[0]
+        enemcurrscore = self.agent_scores[1]
+        episode = get_the_episodes()
         # initqtable ONLY ONCE
-        initqtable()
+        # initqtable()
 
     # Ok we are at step number i
     # find the current state of agent A
@@ -1048,6 +1234,12 @@ class Agent(BaseAgent):
         global enemperviscore
         global meperviscore
         global qtable
+        global num_of_trap
+        global epsilon
+        global max_epsilon
+        global min_epsilon
+        global decay_rate
+        global episode
 
         if i == 0:
             self.do_with_firsti()
@@ -1066,14 +1258,19 @@ class Agent(BaseAgent):
         mecurrscore = myscore
         enemcurrscore = enemyscore
 
-        ac = self.find_the_best_learned_action(start, qtable)
+        exp_tradeoff = random.uniform(0, 1)
+
+        if exp_tradeoff > epsilon:
+            # print("Learned part with "+str(epsilon))
+            ac = self.find_the_best_learned_action(start, qtable, mecurrscore)
+        else:
+            # print("Explore part with "+str(epsilon))
+            ac = self.choose_possible_random(start)
         self.updateqtable(ac, start)
 
-        # print(qtable)
+        epsilon = min_epsilon + (max_epsilon - min_epsilon) * math.exp(-decay_rate * episode)
+
         return ac
-        # for ite in range(4):
-        # print(qtable[ite][getx_from_meenemy(start, enemypos)])
-        # self.print_meenmy_currprev_score()
 
     # Do the turn
     # updating...
@@ -1086,5 +1283,9 @@ class Agent(BaseAgent):
 if __name__ == '__main__':
     data = Agent().play()
     # Store data (serialize)
+    episode = episode + 1
     save_the_qtable()
+    save_the_episodes()
+    # run this Once
+    # set_episode_to_one()
     print("FINISH : ", data)
