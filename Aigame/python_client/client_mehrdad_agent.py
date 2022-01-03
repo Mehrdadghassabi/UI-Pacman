@@ -144,6 +144,7 @@ def get_the_episodes():
 
 
 def set_episode_to_one():
+    global episode
     episode = 1
     save_the_episodes()
 
@@ -158,125 +159,111 @@ class Agent(BaseAgent):
         d = dict()
 
         if ac == Action.UP:
-            new_mepos = (mepos[0], mepos[1] - 1)
-            mex = getx_from_meenemy(new_mepos)
-            neis = self.neighbors(new_mepos)
-            for nei in neis:
-                x = nei[0] - mepos[0]
-                y = nei[1] - mepos[1]
-
-                if x == 1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
-                    d["DOWN"] = table[mex][2]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("DOWN IS AVAIALABLE")
-                    # print(di["DOWN"])
-                if x == -1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
-                    d["UP"] = table[mex][0]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("UP IS AVAIALABLE")
-                    # print(di["UP"])
-                if x == 0 and y == 1 and self.grid[nei[0]][nei[1]] != "W":
-                    d["RIGHT"] = table[mex][3]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("RIGHT IS AVAIALABLE")
-                    # print(di["RIGHT"])
-                if x == 0 and y == -1 and self.grid[nei[0]][nei[1]] != "W":
-                    d["LEFT"] = table[mex][1]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("LEFT IS AVAIALABLE")
-                    # print(di["LEFT"])
-            d["TELEPORT"] = table[mex][4]
-            d["TRAP"] = table[mex][5]
-        if ac == Action.DOWN:
-            new_mepos = (mepos[0], mepos[1] + 1)
-            mex = getx_from_meenemy(new_mepos)
-            neis = self.neighbors(new_mepos)
-            for nei in neis:
-                x = nei[0] - mepos[0]
-                y = nei[1] - mepos[1]
-
-                if x == 1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
-                    d["DOWN"] = table[mex][2]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("DOWN IS AVAIALABLE")
-                    # print(di["DOWN"])
-                if x == -1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
-                    d["UP"] = table[mex][0]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("UP IS AVAIALABLE")
-                    # print(di["UP"])
-                if x == 0 and y == 1 and self.grid[nei[0]][nei[1]] != "W":
-                    d["RIGHT"] = table[mex][3]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("RIGHT IS AVAIALABLE")
-                    # print(di["RIGHT"])
-                if x == 0 and y == -1 and self.grid[nei[0]][nei[1]] != "W":
-                    d["LEFT"] = table[mex][1]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("LEFT IS AVAIALABLE")
-                    # print(di["LEFT"])
-            d["TELEPORT"] = table[mex][4]
-            d["TRAP"] = table[mex][5]
-        if ac == Action.RIGHT:
-            new_mepos = (mepos[0] + 1, mepos[1])
-            mex = getx_from_meenemy(new_mepos)
-            neis = self.neighbors(new_mepos)
-            for nei in neis:
-                x = nei[0] - mepos[0]
-                y = nei[1] - mepos[1]
-
-                if x == 1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
-                    d["DOWN"] = table[mex][2]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("DOWN IS AVAIALABLE")
-                    # print(di["DOWN"])
-                if x == -1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
-                    d["UP"] = table[mex][0]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("UP IS AVAIALABLE")
-                    # print(di["UP"])
-                if x == 0 and y == 1 and self.grid[nei[0]][nei[1]] != "W":
-                    d["RIGHT"] = table[mex][3]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("RIGHT IS AVAIALABLE")
-                    # print(di["RIGHT"])
-                if x == 0 and y == -1 and self.grid[nei[0]][nei[1]] != "W":
-                    d["LEFT"] = table[mex][1]
-                    # print(self.grid[nei[0]][nei[1]])
-                    # print("LEFT IS AVAIALABLE")
-                    # print(di["LEFT"])
-            d["TELEPORT"] = table[mex][4]
-            d["TRAP"] = table[mex][5]
-        if ac == Action.LEFT:
             new_mepos = (mepos[0] - 1, mepos[1])
             mex = getx_from_meenemy(new_mepos)
             neis = self.neighbors(new_mepos)
             for nei in neis:
-                x = nei[0] - mepos[0]
-                y = nei[1] - mepos[1]
+                x = nei[0] - new_mepos[0]
+                y = nei[1] - new_mepos[1]
 
                 if x == 1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
                     d["DOWN"] = table[mex][2]
-                    # print(self.grid[nei[0]][nei[1]])
                     # print("DOWN IS AVAIALABLE")
                     # print(di["DOWN"])
                 if x == -1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
                     d["UP"] = table[mex][0]
-                    # print(self.grid[nei[0]][nei[1]])
                     # print("UP IS AVAIALABLE")
                     # print(di["UP"])
                 if x == 0 and y == 1 and self.grid[nei[0]][nei[1]] != "W":
                     d["RIGHT"] = table[mex][3]
-                    # print(self.grid[nei[0]][nei[1]])
                     # print("RIGHT IS AVAIALABLE")
                     # print(di["RIGHT"])
                 if x == 0 and y == -1 and self.grid[nei[0]][nei[1]] != "W":
                     d["LEFT"] = table[mex][1]
-                    # print(self.grid[nei[0]][nei[1]])
                     # print("LEFT IS AVAIALABLE")
                     # print(di["LEFT"])
-            d["TELEPORT"] = table[mex][4]
-            d["TRAP"] = table[mex][5]
+            # d["TELEPORT"] = table[mex][4]
+            # d["TRAP"] = table[mex][5]
+        if ac == Action.DOWN:
+            new_mepos = (mepos[0] + 1, mepos[1])
+            mex = getx_from_meenemy(new_mepos)
+            neis = self.neighbors(new_mepos)
+            for nei in neis:
+                x = nei[0] - new_mepos[0]
+                y = nei[1] - new_mepos[1]
+
+                if x == 1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                    d["DOWN"] = table[mex][2]
+                    # print("DOWN IS AVAIALABLE")
+                    # print(di["DOWN"])
+                if x == -1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                    d["UP"] = table[mex][0]
+                    # print("UP IS AVAIALABLE")
+                    # print(di["UP"])
+                if x == 0 and y == 1 and self.grid[nei[0]][nei[1]] != "W":
+                    d["RIGHT"] = table[mex][3]
+                    # print("RIGHT IS AVAIALABLE")
+                    # print(di["RIGHT"])
+                if x == 0 and y == -1 and self.grid[nei[0]][nei[1]] != "W":
+                    d["LEFT"] = table[mex][1]
+                    # print("LEFT IS AVAIALABLE")
+                    # print(di["LEFT"])
+            # d["TELEPORT"] = table[mex][4]
+            # d["TRAP"] = table[mex][5]
+        if ac == Action.RIGHT:
+            new_mepos = (mepos[0], mepos[1] + 1)
+            mex = getx_from_meenemy(new_mepos)
+            neis = self.neighbors(new_mepos)
+            # print(new_mepos)
+            # print(neis)
+            for nei in neis:
+                x = nei[0] - new_mepos[0]
+                y = nei[1] - new_mepos[1]
+
+                if x == 1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                    d["DOWN"] = table[mex][2]
+                    # print("DOWN IS AVAIALABLE")
+                    # print(di["DOWN"])
+                if x == -1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                    d["UP"] = table[mex][0]
+                    # print("UP IS AVAIALABLE")
+                    # print(di["UP"])
+                if x == 0 and y == 1 and self.grid[nei[0]][nei[1]] != "W":
+                    d["RIGHT"] = table[mex][3]
+                    # print("RIGHT IS AVAIALABLE")
+                    # print(di["RIGHT"])
+                if x == 0 and y == -1 and self.grid[nei[0]][nei[1]] != "W":
+                    d["LEFT"] = table[mex][1]
+                    # print("LEFT IS AVAIALABLE")
+                    # print(di["LEFT"])
+            # d["TELEPORT"] = table[mex][4]
+            # d["TRAP"] = table[mex][5]
+        if ac == Action.LEFT:
+            new_mepos = (mepos[0], mepos[1] - 1)
+            mex = getx_from_meenemy(new_mepos)
+            neis = self.neighbors(new_mepos)
+            for nei in neis:
+                x = nei[0] - new_mepos[0]
+                y = nei[1] - new_mepos[1]
+
+                if x == 1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                    d["DOWN"] = table[mex][2]
+                    # print("DOWN IS AVAIALABLE")
+                    # print(di["DOWN"])
+                if x == -1 and y == 0 and self.grid[nei[0]][nei[1]] != "W":
+                    d["UP"] = table[mex][0]
+                    # print("UP IS AVAIALABLE")
+                    # print(di["UP"])
+                if x == 0 and y == 1 and self.grid[nei[0]][nei[1]] != "W":
+                    d["RIGHT"] = table[mex][3]
+                    # print("RIGHT IS AVAIALABLE")
+                    # print(di["RIGHT"])
+                if x == 0 and y == -1 and self.grid[nei[0]][nei[1]] != "W":
+                    d["LEFT"] = table[mex][1]
+                    # print("LEFT IS AVAIALABLE")
+                    # print(di["LEFT"])
+            # d["TELEPORT"] = table[mex][4]
+            # d["TRAP"] = table[mex][5]
 
         max_key = max(d, key=d.get)
 
@@ -319,53 +306,85 @@ class Agent(BaseAgent):
             y = 0
             efr = self.estimated_future_reward(qtable, mepos, Action.UP)
             if pervac == Action.UP:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0] + 1, mepos[1])
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.DOWN:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0] - 1, mepos[1])
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.LEFT:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0], mepos[1] + 1)
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.RIGHT:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
-            self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
+                new_mepos = (mepos[0], mepos[1] - 1)
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+            # self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
             # qtable[y][x] = reward
         elif action == Action.LEFT:
             y = 1
             efr = self.estimated_future_reward(qtable, mepos, Action.LEFT)
             if pervac == Action.UP:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0] + 1, mepos[1])
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.DOWN:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0] - 1, mepos[1])
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.LEFT:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0], mepos[1] + 1)
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.RIGHT:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
-            self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
+                new_mepos = (mepos[0], mepos[1] - 1)
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+            # self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
             # qtable[y][x] = reward
         elif action == Action.DOWN:
             y = 2
             efr = self.estimated_future_reward(qtable, mepos, Action.DOWN)
             if pervac == Action.UP:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0] + 1, mepos[1])
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.DOWN:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0] - 1, mepos[1])
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.LEFT:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0], mepos[1] + 1)
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.RIGHT:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
-            self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
+                new_mepos = (mepos[0], mepos[1] - 1)
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+            # self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
             # qtable[y][x] = reward
         elif action == Action.RIGHT:
             y = 3
             efr = self.estimated_future_reward(qtable, mepos, Action.RIGHT)
             if pervac == Action.UP:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0] + 1, mepos[1])
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.DOWN:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0] - 1, mepos[1])
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.LEFT:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
+                new_mepos = (mepos[0], mepos[1] + 1)
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
             if pervac == Action.RIGHT:
-                qtable[x][y] = qtable[x][y] + learning_rate * (reward + (gamma * efr))
-            self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
+                new_mepos = (mepos[0], mepos[1] - 1)
+                newx = getx_from_meenemy(new_mepos)
+                qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+            # self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
             # qtable[y][x] = reward
 
     # return von Neumann neighbours of a node
@@ -378,6 +397,9 @@ class Agent(BaseAgent):
         height = self.grid_height
         x = node[0]
         j = node[1]
+        # print("node: "+str(node))
+        # print("wid: "+str(width))
+        # print("wei: "+str(height))
         neis = []
         if x == 0 and j == 0:
             nei1 = (1, 0)
@@ -437,7 +459,7 @@ class Agent(BaseAgent):
             neis.append(nei3)
             neis.append(nei4)
 
-        # print(neis)
+        # print("neis are: "+str(neis))
         return neis
 
     #  Find paths from start to goal
@@ -850,7 +872,7 @@ class Agent(BaseAgent):
         # print("gamma : " + str(gamma))
         # print("efr : " + str(efr))
         # print("table[x][y] : " + str(table[x][y]))
-        print("---------------------------------------------------")
+        # print("---------------------------------------------------")
 
     # just for debugging
     # get meenmy tree at given depth
@@ -1162,7 +1184,7 @@ class Agent(BaseAgent):
 
         max_key = max(di, key=di.get)
 
-        self.print_rewards(max_key, mepos, di)
+        # self.print_rewards(max_key, mepos, di)
         # print("----------------------------------")
         if max_key == "DOWN":
             return Action.DOWN
@@ -1249,7 +1271,7 @@ class Agent(BaseAgent):
         enemcurrscore = self.agent_scores[1]
         episode = get_the_episodes()
         # initqtable ONLY ONCE
-        # initqtable()
+        initqtable()
 
     # Ok we are at step number i
     # find the current state of agent A
@@ -1364,9 +1386,14 @@ class Agent(BaseAgent):
         # self.print_score_turn(self.agent_scores[0])
 
         start = self.find_state(self.character)
+        # print("start" + str(start))
 
-        myscore = self.agent_scores[0]
-        enemyscore = self.agent_scores[1]
+        if self.character == "A":
+            myscore = self.agent_scores[0]
+            enemyscore = self.agent_scores[1]
+        else:
+            myscore = self.agent_scores[1]
+            enemyscore = self.agent_scores[0]
 
         enemperviscore = enemcurrscore
         meperviscore = mecurrscore
@@ -1376,19 +1403,23 @@ class Agent(BaseAgent):
         exp_tradeoff = random.uniform(0, 1)
 
         if exp_tradeoff > epsilon:
-            print("Learned part with " + str(epsilon))
-            print(start)
+            # print("Learned part with " + str(epsilon))
+            # print("exp_tradeoff: " + str(exp_tradeoff))
+            # print(start)
             ac = self.find_the_best_learned_action(start, qtable)
         else:
-            print("Explore part with " + str(epsilon))
-            print(start)
+            # print("Explore part with " + str(epsilon))
+            # print("exp_tradeoff: " + str(exp_tradeoff))
+            # print(start)
             ac = self.choose_possible_random(start)
+
+        # print("pervac: " + str(pervac))
+        # print("curvac: " + str(ac))
+        # print("-------------------------------------------------------------")
+
         self.updateqtable(ac, start)
-
+        # print("updated&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * math.exp(-decay_rate * episode)
-
-        print("pervac"+str(pervac))
-        print("curvac"+str(ac))
         pervac = ac
 
         return ac
@@ -1405,6 +1436,7 @@ if __name__ == '__main__':
     data = Agent().play()
     # Store data (serialize)
     episode = episode + 1
+    # print(episode)
     save_the_qtable()
     save_the_episodes()
     # run this Once
