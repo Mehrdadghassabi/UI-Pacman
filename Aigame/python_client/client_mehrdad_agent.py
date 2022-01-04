@@ -4,14 +4,17 @@ import pickle
 import random
 import math
 
-# increasing :) (:
-# it was phase 2 final day and im so so exhausted
-# total days spent = 14
-# total hours spent = 140
+# wont increase any more :) (:
+# it is THE END
+# total days working on = 18
+# total hours spent = 170
+# thanks to DR.karshenas and mr.seddighein for designing such good game
+# 2021 Autumn mehrdad ghassabi
+# university of isfahan 7th Semester
 
 
 i = 0
-# step number
+# turn(step) number
 aclis = []
 # action list waiting to be taken
 available_goals = []
@@ -64,7 +67,7 @@ max_epsilon = 1.0
 # Exploration probability at start
 min_epsilon = 0.01
 # Minimum exploration probability
-decay_rate = 0.1
+decay_rate = 0.01
 # Exponential decay rate for exploration prob
 episode = 0
 # Episod num
@@ -74,13 +77,17 @@ minus_Inf = -1000
 
 
 # manhattan distance of 2 node
+# its my heuristic function
 # regardless  of existence a path
 def manhattan(start, goal):
     # print("man: " + str(abs(start[0] - goal[0]) + abs(start[1] - goal[1])))
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
 
 
-# get myposition & enemy position
+# as the game Gird is 2d
+# the qtable gonna be a 3d array
+# but for simplicity i converted in to 2d one
+# this method get the position
 # from the qtable row
 def get_meenemy_pos_fromx(x):
     menum = int(x / (wid * hei))
@@ -106,7 +113,7 @@ def initqtable():
 
 
 # get qtable row
-# from myposition & enemy position
+# from myposition
 def getx_from_meenemy(mepos):
     mex = mepos[0]
     mey = mepos[1]
@@ -123,6 +130,10 @@ def save_the_qtable():
         pickle.dump(qtable, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+# Saving the Number of episode
+# each time this python file runs by the client1_train.sh
+# it get the episode from file increase it
+# and then saved into file this is the saving method
 def save_the_episodes():
     with open('episode.pickle', 'wb') as handle:
         # print(episode)
@@ -137,24 +148,43 @@ def get_the_qtable():
     return oldqtable
 
 
+# Saving the Number of episode
+# each time this python file runs by the client1_train.sh
+# it get the episode from file increase it
+# and then saved into file this is the getting method
 def get_the_episodes():
     with open('episode.pickle', 'rb') as f:
         episode = pickle.load(f)
     return episode
 
 
+# for discarding all prevoius knowledge
+# youve got to run this method and initqtable()
+# Read the comment at main function to understand what i meant
+# \:
 def set_episode_to_one():
     global episode
     episode = 1
     save_the_episodes()
 
 
-# the agent class
+# agent class
+# this is the Author(mehrdad.gv@gmail.com)
+# way to implement an intelligent Agent in the UOI-pacman game
+# speical kind of Pacman game
+# I wrote that when I wasnt familiar with python OOP model
+# so :))))))
+# its a 1410 line single script class
 # an intelligent agent to beat human
-# in speical kind of Pacman game
-# Pacman_UOI
+# its not a EXPERT agent but its very smart
+# implement yours and LETS SEE WHO IS THE BOSS?!!
 class Agent(BaseAgent):
 
+    # Read about Q-learning in the doc and this link!
+    # https://blog.faradars.org/reinforcement-learning-and-q-learning/
+    # as I mentioned before BELLMAN formula got different parameter
+    # one of them is MAX of the possible future Award
+    # that finds the agent possible future Award if it goes to given state
     def estimated_future_reward(self, table, mepos, ac):
         d = dict()
 
@@ -268,13 +298,33 @@ class Agent(BaseAgent):
         max_key = max(d, key=d.get)
 
         if max_key == "DOWN":
-            return table[mex][2]
+            if table[mex][2] > 0:
+                return 1
+            elif table[mex][2] < 0:
+                return -1
+            elif table[mex][2] == 0:
+                return 0
         elif max_key == "UP":
-            return table[mex][0]
+            if table[mex][0] > 0:
+                return 1
+            elif table[mex][0] < 0:
+                return -1
+            elif table[mex][0] == 0:
+                return 0
         elif max_key == "RIGHT":
-            return table[mex][3]
+            if table[mex][3] > 0:
+                return 1
+            elif table[mex][3] < 0:
+                return -1
+            elif table[mex][3] == 0:
+                return 0
         elif max_key == "LEFT":
-            return table[mex][1]
+            if table[mex][1] > 0:
+                return 1
+            elif table[mex][1] < 0:
+                return -1
+            elif table[mex][1] == 0:
+                return 0
         elif max_key == "TELEPORT":
             return table[mex][4]
         elif max_key == "TRAP":
@@ -297,7 +347,6 @@ class Agent(BaseAgent):
         global learning_rate
         global gamma
         global pervac
-        x = getx_from_meenemy(mepos)
         # oldqtable = get_the_qtable()
         # print("x: " + str(x))
         # print(wid * wid * hei * hei)
@@ -309,19 +358,23 @@ class Agent(BaseAgent):
                 new_mepos = (mepos[0] + 1, mepos[1])
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, new_mepos, qtable)
             if pervac == Action.DOWN:
                 new_mepos = (mepos[0] - 1, mepos[1])
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, new_mepos, qtable)
             if pervac == Action.LEFT:
                 new_mepos = (mepos[0], mepos[1] + 1)
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, new_mepos, qtable)
             if pervac == Action.RIGHT:
                 new_mepos = (mepos[0], mepos[1] - 1)
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
-            # self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
+                self.print_updating_qtable(efr, reward, newx, y, new_mepos, qtable)
+
             # qtable[y][x] = reward
         elif action == Action.LEFT:
             y = 1
@@ -330,19 +383,22 @@ class Agent(BaseAgent):
                 new_mepos = (mepos[0] + 1, mepos[1])
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, new_mepos, qtable)
             if pervac == Action.DOWN:
                 new_mepos = (mepos[0] - 1, mepos[1])
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, new_mepos, qtable)
             if pervac == Action.LEFT:
                 new_mepos = (mepos[0], mepos[1] + 1)
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, new_mepos, qtable)
             if pervac == Action.RIGHT:
                 new_mepos = (mepos[0], mepos[1] - 1)
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
-            # self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
+                self.print_updating_qtable(efr, reward, newx, y, new_mepos, qtable)
             # qtable[y][x] = reward
         elif action == Action.DOWN:
             y = 2
@@ -351,19 +407,22 @@ class Agent(BaseAgent):
                 new_mepos = (mepos[0] + 1, mepos[1])
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, mepos, qtable)
             if pervac == Action.DOWN:
                 new_mepos = (mepos[0] - 1, mepos[1])
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, mepos, qtable)
             if pervac == Action.LEFT:
                 new_mepos = (mepos[0], mepos[1] + 1)
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, mepos, qtable)
             if pervac == Action.RIGHT:
                 new_mepos = (mepos[0], mepos[1] - 1)
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
-            # self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
+                self.print_updating_qtable(efr, reward, newx, y, mepos, qtable)
             # qtable[y][x] = reward
         elif action == Action.RIGHT:
             y = 3
@@ -372,20 +431,36 @@ class Agent(BaseAgent):
                 new_mepos = (mepos[0] + 1, mepos[1])
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, mepos, qtable)
             if pervac == Action.DOWN:
                 new_mepos = (mepos[0] - 1, mepos[1])
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, mepos, qtable)
             if pervac == Action.LEFT:
                 new_mepos = (mepos[0], mepos[1] + 1)
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
+                self.print_updating_qtable(efr, reward, newx, y, mepos, qtable)
             if pervac == Action.RIGHT:
                 new_mepos = (mepos[0], mepos[1] - 1)
                 newx = getx_from_meenemy(new_mepos)
                 qtable[newx][y] = qtable[newx][y] + learning_rate * (reward + (gamma * efr))
-            # self.print_updating_qtable(efr, reward, x, y, mepos, qtable)
+                self.print_updating_qtable(efr, reward, newx, y, mepos, qtable)
+
             # qtable[y][x] = reward
+
+    # better policy for updaing our qtable
+    # taking good policy for updating means a better result
+    def updateqtable_new(self, perac, curac, table, mepos, rex, rey):
+        global meperviscore
+        global mecurrscore
+        global learning_rate
+        global gamma
+        reward = (mecurrscore - meperviscore)
+        efr = self.estimated_future_reward(table, mepos, curac)
+        qtable[rex][rey] = qtable[rex][rey] + learning_rate * (reward + (gamma * efr))
+        self.print_updating_qtable(efr, reward, rex, rey, table)
 
     # return von Neumann neighbours of a node
     # note that :
@@ -547,6 +622,9 @@ class Agent(BaseAgent):
     def goals_list(self, current):
         lavailable_goals = []
         lunavailable_goals = []
+        sco = self.agent_scores[0] if self.character == "A" else self.agent_scores[1]
+        # THE THIRD ******* Bug
+        # self.agent_scores[0] instead of sco
         for x in range(self.grid_height):
             for j in range(self.grid_width):
                 # print(self.grid[i][j])
@@ -561,21 +639,21 @@ class Agent(BaseAgent):
                         lunavailable_goals.append(tup1)
                 if self.grid[x][j] == "2":
                     tup1 = (x, j)
-                    if self.agent_scores[0] >= 15 + manhattan(current, tup1) and green_diamond_eaten <= 8:
+                    if sco >= 15 + manhattan(current, tup1) and green_diamond_eaten <= 8:
                         # print("Scpo2 : " + str(15 + manhattan(current, tup1)))
                         lavailable_goals.append(tup1)
                     else:
                         lunavailable_goals.append(tup1)
                 if self.grid[x][j] == "3":
                     tup1 = (x, j)
-                    if self.agent_scores[0] >= 50 + manhattan(current, tup1) and red_diamond_eaten <= 5:
+                    if sco >= 50 + manhattan(current, tup1) and red_diamond_eaten <= 5:
                         # print("Scpo3 : " + str(50 + manhattan(current, tup1)))
                         lavailable_goals.append(tup1)
                     else:
                         lunavailable_goals.append(tup1)
                 if self.grid[x][j] == "4":
                     tup1 = (x, j)
-                    if self.agent_scores[0] >= 140 + manhattan(current, tup1) and blue_diamond_eaten <= 4:
+                    if sco >= 140 + manhattan(current, tup1) and blue_diamond_eaten <= 4:
                         # print("Scpo4 : " + str(140 + manhattan(current, tup1)))
                         lavailable_goals.append(tup1)
                     else:
@@ -710,29 +788,30 @@ class Agent(BaseAgent):
         y = goal[1]
         distance = manhattan(current, goal)
         enemydis = manhattan(enemycurrent, goal)
+        sco = self.agent_scores[0] if self.character == "A" else self.agent_scores[1]
 
         # current is myposition
         # distance is manhattan distance of me and the goal
         # enemydis is manhattan distance of enemy and the goal
         # enemycurrent is enemy position
-        # print(" Agent score " + str(self.agent_scores[0]))
+        # print(" Agent score " + str(sco))
 
         if self.grid[x][y] == "1":
             if scared_from_enemy:
                 return (10 / distance ** 2) + enemydis
             if not scared_from_enemy:
                 return 10 / distance ** 2
-        elif self.grid[x][y] == "2" and self.agent_scores[0] > 15:
+        elif self.grid[x][y] == "2" and sco > 15:
             if scared_from_enemy:
                 return (25 / distance ** 2) + enemydis
             if not scared_from_enemy:
                 return 25 / distance ** 2
-        elif self.grid[x][y] == "3" and self.agent_scores[0] > 50:
+        elif self.grid[x][y] == "3" and sco > 50:
             if scared_from_enemy:
                 return (35 / distance ** 2) + enemydis
             if not scared_from_enemy:
                 return 35 / distance ** 2
-        elif self.grid[x][y] == "4" and self.agent_scores[0] > 140:
+        elif self.grid[x][y] == "4" and sco > 140:
             if scared_from_enemy:
                 return (75 / distance ** 2) + enemydis
             if not scared_from_enemy:
@@ -825,9 +904,10 @@ class Agent(BaseAgent):
     # print the available_goals & unavailable_goals
     # print the current position
     def print_availability(self, start):
+        sco = self.agent_scores[0] if self.character == "A" else self.agent_scores[1]
         print("av: " + str(available_goals))
         print("un: " + str(unavailable_goals))
-        # print("step: " + str(i) + "score: " + str(self.agent_scores[0]))
+        # print("step: " + str(i) + "score: " + str(sco))
         print("my current position: " + str(start))
         # print("distance to goal: " + str(cost_so_far[goal]))
 
@@ -854,17 +934,22 @@ class Agent(BaseAgent):
         print("enemperviscore: " + str(enemperviscore))
         print("enemcurrscore: " + str(enemcurrscore))
 
+    # just for debugging
+    # printing reward and the cell of rewards
+    # including the amount of actions
     def print_rewards(self, max_key, mepos, di):
-        print(max_key)
-        print("mepos: ")
-        print(mepos)
-        print("di")
-        print(di)
+        print("max key: " + str(max_key))
+        print("mepos: " + str(mepos))
+        print("di" + str(di))
 
-    def print_updating_qtable(self, efr, reward, x, y, mepos, table):
-        print("x: " + str(mepos))
+    # just for debugging
+    # printing my score and enemy score
+    # in current step and previous step
+    def print_updating_qtable(self, efr, reward, x, y, table):
+        # print("x: " + str(mepos))
         print("estimated_future_reward: " + str(efr))
-        print("score: " + str(self.agent_scores[0]))
+        score = self.agent_scores[0] if self.character == "A" else self.agent_scores[1]
+        print("score: " + str(score))
         print("REWARD is : " + str(reward))
         print("REFORMED REWARD is : " + str(learning_rate * (reward + (gamma * efr))))
         # print("learning rate : " + str(learning_rate))
@@ -873,6 +958,46 @@ class Agent(BaseAgent):
         # print("efr : " + str(efr))
         # print("table[x][y] : " + str(table[x][y]))
         # print("---------------------------------------------------")
+
+    # calculating the the position of the cell
+    # which reward gonna be stored
+    def rewarded_ac_pos(self, perrvac, table, start):
+        rewarded_pos = (1000, 1000)
+        x = getx_from_meenemy(rewarded_pos)
+        y = 10
+        isfirstac = True
+        if perrvac == Action.DOWN:
+            rewarded_pos = (start[0] - 1, start[1])
+            x = getx_from_meenemy(rewarded_pos)
+            y = 2
+            isfirstac = False
+        elif perrvac == Action.UP:
+            rewarded_pos = (start[0] + 1, start[1])
+            x = getx_from_meenemy(rewarded_pos)
+            y = 0
+            isfirstac = False
+        elif perrvac == Action.RIGHT:
+            rewarded_pos = (start[0], start[1] - 1)
+            x = getx_from_meenemy(rewarded_pos)
+            y = 3
+            isfirstac = False
+        elif perrvac == Action.LEFT:
+            rewarded_pos = (start[0], start[1] + 1)
+            x = getx_from_meenemy(rewarded_pos)
+            y = 1
+            isfirstac = False
+        else:
+            isfirstac = True
+
+        print("reeeeeward pos: " + str(rewarded_pos))
+        print("reeeeeward x: " + str(x))
+        print("reeeeeward y: " + str(y))
+        if not isfirstac:
+            return x, y
+            # print(table[x][y])
+        else:
+            return None
+            print("firstAc No reward")
 
     # just for debugging
     # get meenmy tree at given depth
@@ -1149,6 +1274,8 @@ class Agent(BaseAgent):
                     else:
                         return Action.RIGHT
 
+    # this exactly where the agent think what does it learned
+    # and choose the action which is more recommended by the rewards
     def find_the_best_learned_action(self, mepos, table):
         global num_of_trap
         di = dict()
@@ -1184,7 +1311,7 @@ class Agent(BaseAgent):
 
         max_key = max(di, key=di.get)
 
-        # self.print_rewards(max_key, mepos, di)
+        self.print_rewards(max_key, mepos, di)
         # print("----------------------------------")
         if max_key == "DOWN":
             return Action.DOWN
@@ -1201,6 +1328,9 @@ class Agent(BaseAgent):
         else:
             return Action.NOOP
 
+    # Choose an Action Randomly
+    # invalid Action cant be chossen in order to
+    # increase the performance
     def choose_possible_random(self, mepos):
         global num_of_trap
         possac = []
@@ -1267,11 +1397,15 @@ class Agent(BaseAgent):
         wid = self.grid_width
         hei = self.grid_height
         qtable = get_the_qtable()
-        mecurrscore = self.agent_scores[0]
-        enemcurrscore = self.agent_scores[1]
+        if self.character == "A":
+            mecurrscore = self.agent_scores[0]
+            enemcurrscore = self.agent_scores[1]
+        else:
+            mecurrscore = self.agent_scores[1]
+            enemcurrscore = self.agent_scores[0]
         episode = get_the_episodes()
         # initqtable ONLY ONCE
-        initqtable()
+        # initqtable()
 
     # Ok we are at step number i
     # find the current state of agent A
@@ -1299,15 +1433,19 @@ class Agent(BaseAgent):
         if i == 0:
             self.do_with_firsti()
         i = i + 1
-        # self.print_score_turn(self.agent_scores[0])
+        # self.print_score_turn(self.agent_scores[0]) third ***** bug
         # THE SECOND ******* Bug
         # start = self.find_state("A")
         # enemypos = self.find_state("B")
         start = self.find_state(self.character)
         enemypos = self.find_state("B" if self.character == "A" else "A")
 
-        myscore = self.agent_scores[0]
-        enemyscore = self.agent_scores[1]
+        if self.character == "A":
+            myscore = self.agent_scores[0]
+            enemyscore = self.agent_scores[1]
+        else:
+            myscore = self.agent_scores[1]
+            enemyscore = self.agent_scores[0]
         scared_from_enemy = self.agent_one_scaring_from_agent_two(myscore, enemyscore)
 
         enemperviscore = enemcurrscore
@@ -1364,6 +1502,21 @@ class Agent(BaseAgent):
             available_goals.remove(goal)
             return Action.TELEPORT
 
+    # Ok we are at episode number i
+    # find the current state of agent A
+    # find your score in this step and in the previous one
+    # the reward gonna be current score minus previous score
+    # I used Q-leaning method for machine learning
+    # in Q-learning we got a learning rate calculated by this formula
+    # epsilon (or learning rate) = (1/e) ^ (decay_rate* number of episode)
+    # decay_rate is speed of learning
+    # setting decay_rate a small number would cause
+    # the agent learn better but slower (with more number of episode)
+    # choose a random number between 0 , 1
+    # if this number was greater than epsilon means that the agent have learned about environment
+    # else the agent doesnt know enough about our environment
+    # if the agent know enough about environment choose the action due to Q-table
+    # if it doesnt choose a valid random One! for exploring and learning about the environment
     def find_appropriate_turnـby_machine_learning(self):
         global i
         global enemcurrscore
@@ -1403,42 +1556,76 @@ class Agent(BaseAgent):
         exp_tradeoff = random.uniform(0, 1)
 
         if exp_tradeoff > epsilon:
-            # print("Learned part with " + str(epsilon))
-            # print("exp_tradeoff: " + str(exp_tradeoff))
-            # print(start)
+            print("Learned part with " + str(epsilon))
+            print("exp_tradeoff: " + str(exp_tradeoff))
+            print(start)
             ac = self.find_the_best_learned_action(start, qtable)
         else:
-            # print("Explore part with " + str(epsilon))
-            # print("exp_tradeoff: " + str(exp_tradeoff))
-            # print(start)
+            print("Explore part with " + str(epsilon))
+            print("exp_tradeoff: " + str(exp_tradeoff))
+            print(start)
             ac = self.choose_possible_random(start)
 
-        # print("pervac: " + str(pervac))
-        # print("curvac: " + str(ac))
-        # print("-------------------------------------------------------------")
-
-        self.updateqtable(ac, start)
-        # print("updated&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+        print("pervac: " + str(pervac))
+        print("curvac: " + str(ac))
+        # print(qtable)
+        if pervac != Action.NOOP:
+            rex, rey = self.rewarded_ac_pos(pervac, qtable, start)
+            self.updateqtable_new(pervac, ac, qtable, start, rex, rey)
+            print("amount at : " + str(qtable[rex][rey]))
+        # self.updateqtable(ac, start,rex,rey)
+        print("-------------------------------------------------------------")
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * math.exp(-decay_rate * episode)
         pervac = ac
 
         return ac
 
     # Do the turn
-    # updating...
+    # wanna finding the best action normaly?
+    # return self.find_appropriate_turn()
+    # wanna finding the best action by machine learning?
+    # return self.find_appropriate_turnـby_machine_learning()
     def do_turn(self) -> Action:
         return self.find_appropriate_turnـby_machine_learning()
 
 
 # the main function
-# do the turn
+# if you wanna do the job by machine learning
+# youve got to train your agent first!
+# in order to training
+# Do these ONLY ONCE
+# --------------------------------------------------------------
+# 1. comment all the code in the main function
+#    Except set_episode_to_one()
+#    this would tell the agent that
+#    hey this is the begining of the learning!!!
+# 2. uncomment initqtable() from do_with_firsti()
+#    for discarding all the previous knowledge
+# 3. as Q-learning is a tabular reinforcement learning
+#    youve got to do these for each map
+# --------------------------------------------------------------
+# Sooooo Lets train the agent
+# there is three bash file for training
+# run them in three different terminal
+# Notice!: the server_train.sh should be in venv
+# they would run the programme and give the knowledge to your agent
+# ....
+# ....
+# if you wanna run the ordinary agent simply
+# comment all of these codes Except
+# data = Agent().play() & print("FINISH : ", data)
 if __name__ == '__main__':
     data = Agent().play()
-    # Store data (serialize)
+    # comment these below code if
+    # you wanna run the ordinary agent simply
     episode = episode + 1
-    # print(episode)
+    print(episode)
     save_the_qtable()
     save_the_episodes()
+    # comment these above code if
+    # you wanna run the ordinary agent simply
+
     # run this Once
     # set_episode_to_one()
+
     print("FINISH : ", data)
