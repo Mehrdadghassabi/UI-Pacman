@@ -1586,7 +1586,7 @@ class Agent(BaseAgent):
     # wanna finding the best action by machine learning?
     # return self.find_appropriate_turnـby_machine_learning()
     def do_turn(self) -> Action:
-        return self.find_appropriate_turnـby_machine_learning()
+        return self.find_appropriate_turn()
 
 
 # the main function
@@ -1618,10 +1618,10 @@ if __name__ == '__main__':
     data = Agent().play()
     # comment these below code if
     # you wanna run the ordinary agent simply
-    episode = episode + 1
-    print(episode)
-    save_the_qtable()
-    save_the_episodes()
+    # episode = episode + 1
+    # print(episode)
+    # save_the_qtable()
+    # save_the_episodes()
     # comment these above code if
     # you wanna run the ordinary agent simply
 
