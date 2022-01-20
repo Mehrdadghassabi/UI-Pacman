@@ -1,2 +1,2 @@
 thanks to
-https://github.com/rominaraoufian/AI-Project
+developed by ://github.com/rominaraoufian/AI-Project
