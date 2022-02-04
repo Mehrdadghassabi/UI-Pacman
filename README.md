@@ -65,10 +65,12 @@
 
 - **R:** Reset game showing
 
-# Client 
+# Clients
 
+- Lots of inteligent Agent have been implemented you can run them and compare them with yourself
 - My agent is `'mehrdad_agent.py'` is my smart agent
 - You can use `'client_main.py'` to develop your AI code. Your code should be placed on the `'do_turn'` function.
 - You can change IP and Port of server in `'client_config.json'` 
+- Forked from <a href=https://github.com/amirsed76/AI_Game_2021>this</a>
 
 
