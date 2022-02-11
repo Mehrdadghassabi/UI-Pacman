@@ -1,4 +1,2 @@
-this is my implemention :|
-read Pacman_Agent.pdf
-
-Score : 99 of 100
+- developed by : <a href=https://github.com/Mehrdadghassabi>me</a>
+- Score : 99 of 100
