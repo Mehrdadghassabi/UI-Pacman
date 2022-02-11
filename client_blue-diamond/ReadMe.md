@@ -1,3 +1,2 @@
-developed by : https://github.com/rominaraoufian/AI-Project
-
-Score : 121 of 100
+- developed by : <a href=https://github.com/rominaraoufian/AI-Project>romina raoufian</a>
+- Score : 121 of 100
